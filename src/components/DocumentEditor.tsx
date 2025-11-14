@@ -27,7 +27,7 @@ interface DocumentEditorProps {
 export function DocumentEditor({ documentId, onDocumentChange }: DocumentEditorProps) {
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [showAIChat, setShowAIChat] = useState(false);
@@ -67,6 +67,7 @@ export function DocumentEditor({ documentId, onDocumentChange }: DocumentEditorP
       setTitle(document.title);
       lastContentRef.current = document.content;
       lastTitleRef.current = document.title;
+      setIsEditingTitle(false);
       setHasUnsavedChanges(false);
       setLastSaved(new Date(document.lastModifiedAt));
     }
@@ -97,7 +98,6 @@ export function DocumentEditor({ documentId, onDocumentChange }: DocumentEditorP
       lastTitleRef.current = title;
       setHasUnsavedChanges(false);
       setLastSaved(new Date());
-      setIsEditing(false);
     } catch (error) {
       console.error("Auto-save failed:", error);
       toast.error("Auto-save failed");
@@ -127,13 +127,12 @@ export function DocumentEditor({ documentId, onDocumentChange }: DocumentEditorP
 
   const handleContentChange = (newContent: string) => {
     setContent(newContent);
-    setIsEditing(true);
     setHasUnsavedChanges(true);
   };
 
   const handleTitleChange = (newTitle: string) => {
     setTitle(newTitle);
-    setIsEditing(true);
+    setIsEditingTitle(true);
     setHasUnsavedChanges(true);
   };
 
@@ -150,7 +149,7 @@ export function DocumentEditor({ documentId, onDocumentChange }: DocumentEditorP
       
       lastContentRef.current = content;
       lastTitleRef.current = title;
-      setIsEditing(false);
+      setIsEditingTitle(false);
       setHasUnsavedChanges(false);
       setLastSaved(new Date());
       toast.success("Document saved successfully");
@@ -282,7 +281,7 @@ export function DocumentEditor({ documentId, onDocumentChange }: DocumentEditorP
       <div className="border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            {isEditing ? (
+            {isEditingTitle ? (
               <input
                 type="text"
                 value={title}
@@ -295,7 +294,7 @@ export function DocumentEditor({ documentId, onDocumentChange }: DocumentEditorP
             ) : (
               <h1 
                 className="text-2xl font-bold text-gray-900 cursor-pointer hover:bg-gray-50 rounded px-2 py-1"
-                onClick={() => setIsEditing(true)}
+                onClick={() => setIsEditingTitle(true)}
               >
                 {document.title}
               </h1>
