@@ -22,9 +22,10 @@ import { AIChatSidebar } from "./AIChatSidebar";
 interface DocumentEditorProps {
   documentId: string | null;
   onDocumentChange: (documentId: string | null) => void;
+  currentUserName?: string;
 }
 
-export function DocumentEditor({ documentId, onDocumentChange }: DocumentEditorProps) {
+export function DocumentEditor({ documentId, onDocumentChange, currentUserName }: DocumentEditorProps) {
   const [content, setContent] = useState("");
   const [title, setTitle] = useState("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -257,11 +258,11 @@ export function DocumentEditor({ documentId, onDocumentChange }: DocumentEditorP
 
   if (!documentId) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50">
+      <div className="flex h-full flex-1 items-center justify-center bg-[#fdfcf8]">
         <div className="text-center">
-          <DocumentArrowDownIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Document Selected</h3>
-          <p className="text-gray-600">Select a document from the sidebar to start editing</p>
+          <DocumentArrowDownIcon className="mx-auto mb-4 h-16 w-16 text-neutral-300" />
+          <h3 className="text-lg font-semibold text-neutral-800">No document selected</h3>
+          <p className="mt-2 text-sm text-neutral-500">Choose a page from the sidebar to begin editing.</p>
         </div>
       </div>
     );
@@ -269,165 +270,165 @@ export function DocumentEditor({ documentId, onDocumentChange }: DocumentEditorP
 
   if (!document) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex h-full flex-1 items-center justify-center bg-[#fdfcf8]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-700" />
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col bg-white">
-      {/* Header */}
-      <div className="border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex-1">
+    <div className="flex h-full flex-col overflow-hidden bg-[#fdfcf8]">
+      <div className="border-b border-neutral-200/70 bg-[#f7f6f3]/80 px-10 py-5 backdrop-blur">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-neutral-400">
+              <span>Document</span>
+              <span className="text-neutral-300">•</span>
+              <span>Version {document.version}</span>
+            </div>
             {isEditingTitle ? (
               <input
                 type="text"
                 value={title}
                 onChange={(e) => handleTitleChange(e.target.value)}
-                className="text-2xl font-bold text-gray-900 bg-transparent border-none outline-none focus:ring-2 focus:ring-blue-500 rounded px-2 py-1"
+                className="mt-3 w-full border-none bg-transparent text-3xl font-semibold text-neutral-900 outline-none focus:ring-1 focus:ring-neutral-400"
                 onBlur={handleSave}
                 onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                 autoFocus
               />
             ) : (
-              <h1 
-                className="text-2xl font-bold text-gray-900 cursor-pointer hover:bg-gray-50 rounded px-2 py-1"
+              <h1
+                className="mt-3 cursor-text text-3xl font-semibold text-neutral-900 transition hover:text-neutral-700"
                 onClick={() => setIsEditingTitle(true)}
               >
                 {document.title}
               </h1>
             )}
-            <div className="flex items-center text-sm text-gray-500 mt-1">
-              <ClockIcon className="w-4 h-4 mr-1" />
-              {lastSaved ? `Last saved ${lastSaved.toLocaleString()}` : 'Never saved'}
-              <span className="mx-2">•</span>
-              Version {document.version}
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
+              <span className="inline-flex items-center gap-1">
+                <ClockIcon className="h-4 w-4 text-neutral-400" />
+                {lastSaved ? `Last edited ${lastSaved.toLocaleString()}` : 'Never saved'}
+              </span>
+              <span className="text-neutral-300">•</span>
+              <span className="inline-flex items-center gap-1">
+                <UsersIcon className="h-4 w-4 text-neutral-400" />
+                {currentUserName ? `${currentUserName}` : 'Shared workspace'}
+              </span>
+              <span className="text-neutral-300">•</span>
+              <span className="inline-flex items-center gap-1">
+                <EyeIcon className="h-4 w-4 text-neutral-400" />
+                {document.isPublic ? 'Public page' : 'Private page'}
+              </span>
               {isAutoSaving && (
                 <>
-                  <span className="mx-2">•</span>
-                  <span className="text-blue-600">Auto-saving...</span>
+                  <span className="text-neutral-300">•</span>
+                  <span className="text-neutral-500">Auto-saving…</span>
                 </>
               )}
             </div>
           </div>
-          
-          <div className="flex items-center space-x-2">
+
+          <div className="flex flex-wrap items-center gap-2 text-sm">
             <button
               onClick={() => setShowVersions(!showVersions)}
-              className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
-            >
-              <ClockIcon className="w-4 h-4 mr-1" />
-              Versions
-            </button>
-            
-            <button
-              onClick={() => setShowComments(!showComments)}
-              className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
-            >
-              <ChatBubbleLeftIcon className="w-4 h-4 mr-1" />
-              Comments ({comments.length})
-            </button>
-            
-            <button
-              onClick={() => setShowAIChat(!showAIChat)}
-              className={`px-3 py-2 text-sm rounded-md hover:bg-purple-200 flex items-center transition-colors ${
-                showAIChat 
-                  ? 'bg-purple-100 text-purple-700 border border-purple-200' 
-                  : 'bg-gray-100 text-gray-700'
+              className={`inline-flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-1.5 font-medium text-neutral-600 transition hover:bg-white hover:text-neutral-700 ${
+                showVersions ? 'bg-white shadow-sm' : 'bg-transparent'
               }`}
             >
-              <SparklesIcon className="w-4 h-4 mr-1" />
+              <ClockIcon className="h-4 w-4" />
+              Versions
+            </button>
+
+            <button
+              onClick={() => setShowComments(!showComments)}
+              className={`inline-flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-1.5 font-medium text-neutral-600 transition hover:bg-white hover:text-neutral-700 ${
+                showComments ? 'bg-white shadow-sm' : 'bg-transparent'
+              }`}
+            >
+              <ChatBubbleLeftIcon className="h-4 w-4" />
+              Comments ({comments.length})
+            </button>
+
+            <button
+              onClick={() => setShowAIChat(!showAIChat)}
+              className={`inline-flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-1.5 font-medium transition hover:bg-white ${
+                showAIChat
+                  ? 'border-purple-300 bg-purple-50 text-purple-700 shadow-sm'
+                  : 'text-neutral-600 hover:text-neutral-700'
+              }`}
+            >
+              <SparklesIcon className="h-4 w-4" />
               AI Assistant
             </button>
-            
+
             <button
               onClick={exportToPDF}
-              className="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 flex items-center"
+              className="inline-flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-1.5 font-medium text-neutral-600 transition hover:bg-white hover:text-neutral-700"
             >
-              <DocumentArrowDownIcon className="w-4 h-4 mr-1" />
-              Export PDF
+              <DocumentArrowDownIcon className="h-4 w-4" />
+              Export
             </button>
-            
+
             <button
               onClick={handleShare}
-              className="px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
+              className="inline-flex items-center gap-2 rounded-md bg-neutral-900 px-4 py-1.5 font-medium text-neutral-100 transition hover:bg-neutral-700"
             >
-              <ShareIcon className="w-4 h-4 mr-1" />
+              <ShareIcon className="h-4 w-4" />
               Share
             </button>
 
             <button
               onClick={handleDelete}
-              className="px-3 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center"
+              className="inline-flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 font-medium text-red-600 transition hover:bg-red-100"
             >
-              <TrashIcon className="w-4 h-4 mr-1" />
+              <TrashIcon className="h-4 w-4" />
               Delete
             </button>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 flex">
-        {/* Main Editor */}
-        <div className="flex-1 flex flex-col">
-          <div className="flex-1 p-6">
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-4xl px-10 pb-24 pt-12">
+            <div className="mb-10 flex items-center gap-3 text-sm text-neutral-500">
+              <UsersIcon className="h-5 w-5 text-neutral-400" />
+              <span>Collaborate with your team and keep every update in one place.</span>
+            </div>
             <textarea
               value={content}
               onChange={(e) => handleContentChange(e.target.value)}
-              className="w-full h-full resize-none border-none outline-none text-gray-900 leading-relaxed text-base"
-              placeholder="Start writing your document..."
-              style={{ fontFamily: 'Georgia, serif' }}
+              className="w-full min-h-[60vh] resize-none border-none bg-transparent text-[16px] leading-7 text-neutral-800 outline-none placeholder:text-neutral-400"
+              placeholder="Type '/' for commands or start writing..."
+              style={{ fontFamily: 'Inter, "Helvetica Neue", sans-serif' }}
             />
           </div>
-          
-          {hasUnsavedChanges && (
-            <div className="border-t border-gray-200 px-6 py-3 bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="text-sm text-gray-600">Unsaved changes</span>
-                  {isAutoSaving && (
-                    <span className="ml-2 text-sm text-blue-600">Auto-saving in progress...</span>
-                  )}
-                </div>
-                <button
-                  onClick={handleSave}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 flex items-center"
-                >
-                  <CheckIcon className="w-4 h-4 mr-1" />
-                  Save Now
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* Versions Panel */}
         {showVersions && (
-          <div className="w-80 border-l border-gray-200 bg-gray-50">
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="font-semibold text-gray-900">Document Versions</h3>
+          <div className="flex w-80 flex-col border-l border-neutral-200 bg-[#f7f6f3]">
+            <div className="border-b border-neutral-200 px-4 py-3">
+              <h3 className="text-sm font-semibold text-neutral-700">Document versions</h3>
             </div>
-            <div className="overflow-y-auto max-h-96">
+            <div className="flex-1 overflow-y-auto">
               {versions.map((version) => (
-                <div key={version._id} className="p-4 border-b border-gray-200 hover:bg-white">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-sm">Version {version.version}</span>
+                <div key={version._id} className="border-b border-neutral-200 px-4 py-4 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-neutral-700">Version {version.version}</span>
                     {version.version !== document.version && (
                       <button
                         onClick={() => handleRollback(version.version)}
-                        className="text-xs text-blue-600 hover:text-blue-800"
+                        className="text-xs font-medium text-neutral-500 transition hover:text-neutral-800"
                       >
-                        Rollback
+                        Restore
                       </button>
                     )}
                   </div>
-                  <p className="text-xs text-gray-600 mb-1">
+                  <p className="mt-1 text-xs text-neutral-500">
                     {new Date(version.createdAt).toLocaleString()}
                   </p>
                   {version.changeDescription && (
-                    <p className="text-xs text-gray-500">{version.changeDescription}</p>
+                    <p className="mt-2 text-xs text-neutral-600">{version.changeDescription}</p>
                   )}
                 </div>
               ))}
@@ -435,59 +436,73 @@ export function DocumentEditor({ documentId, onDocumentChange }: DocumentEditorP
           </div>
         )}
 
-        {/* Comments Panel */}
         {showComments && (
-          <div className="w-80 border-l border-gray-200 bg-gray-50 flex flex-col">
-            <div className="p-4 border-b border-gray-200">
-              <h3 className="font-semibold text-gray-900">Comments</h3>
+          <div className="flex w-80 flex-col border-l border-neutral-200 bg-[#f7f6f3]">
+            <div className="border-b border-neutral-200 px-4 py-3">
+              <h3 className="text-sm font-semibold text-neutral-700">Comments</h3>
             </div>
-            
             <div className="flex-1 overflow-y-auto">
               {comments.map((comment) => (
-                <div key={comment._id} className="p-4 border-b border-gray-200">
-                  <div className="flex items-center mb-2">
-                    <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                <div key={comment._id} className="border-b border-neutral-200 px-4 py-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-900 text-xs font-semibold text-neutral-100">
                       {comment.author?.name?.[0] || 'U'}
                     </div>
-                    <span className="ml-2 text-sm font-medium text-gray-900">
-                      {comment.author?.name || 'Unknown User'}
-                    </span>
+                    <div>
+                      <p className="font-medium text-neutral-700">
+                        {comment.author?.name || 'Unknown user'}
+                      </p>
+                      <p className="text-xs text-neutral-500">
+                        {new Date(comment.createdAt).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-sm text-gray-700 mb-2">{comment.content}</p>
-                  <p className="text-xs text-gray-500">
-                    {new Date(comment.createdAt).toLocaleString()}
-                  </p>
+                  <p className="mt-3 text-sm leading-relaxed text-neutral-700">{comment.content}</p>
                 </div>
               ))}
             </div>
-            
-            <form onSubmit={handleAddComment} className="p-4 border-t border-gray-200">
+            <form onSubmit={handleAddComment} className="border-t border-neutral-200 px-4 py-3">
               <textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Add a comment..."
-                className="w-full p-2 text-sm border border-gray-300 rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Leave a note..."
+                className="w-full resize-none rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 outline-none transition focus:border-neutral-400 focus:ring-0"
                 rows={3}
               />
               <button
                 type="submit"
                 disabled={!newComment.trim()}
-                className="mt-2 w-full px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="mt-3 w-full rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-neutral-100 transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:bg-neutral-300"
               >
-                Add Comment
+                Add comment
               </button>
             </form>
           </div>
         )}
 
-        {/* AI Chat Sidebar */}
-        <AIChatSidebar 
-          isOpen={showAIChat} 
+        <AIChatSidebar
+          isOpen={showAIChat}
           onClose={() => setShowAIChat(false)}
           documentId={documentId}
           documentContent={content}
         />
       </div>
+
+      {hasUnsavedChanges && (
+        <div className="flex items-center justify-between border-t border-neutral-200 bg-[#f7f6f3]/90 px-10 py-3 text-sm text-neutral-600">
+          <div className="flex items-center gap-2">
+            <span>Unsaved changes</span>
+            {isAutoSaving && <span className="text-neutral-500">Auto-saving in progress…</span>}
+          </div>
+          <button
+            onClick={handleSave}
+            className="inline-flex items-center gap-2 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-neutral-100 transition hover:bg-neutral-700"
+          >
+            <CheckIcon className="h-4 w-4" />
+            Save now
+          </button>
+        </div>
+      )}
     </div>
   );
 }

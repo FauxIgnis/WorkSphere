@@ -28,8 +28,10 @@ body {
     "Segoe UI Emoji",
     "Segoe UI Symbol",
     "Noto Color Emoji";
-  color: var(--color-dark);
-  background: var(--color-light);
+  color: #1f1f1f;
+  background-color: #f7f6f3;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* only use this to update the style of the auth input fields. use a different class for all other input fields */
