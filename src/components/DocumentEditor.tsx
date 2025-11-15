@@ -418,7 +418,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
           <div className="mx-auto w-full max-w-4xl px-10 pb-24 pt-12">
             <div className="mb-10 flex items-center gap-3 text-sm text-neutral-500">
               <UsersIcon className="h-5 w-5 text-neutral-400" />
-              <span>Collaborate with your team and keep every update in one place.</span>
+              <span>Collaborate with your team and keep every update in one place. Use / to use styling</span>
             </div>
             <TipTapEditor
               key={documentId ?? "new-document"}
