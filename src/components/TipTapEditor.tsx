@@ -523,9 +523,14 @@ export function TipTapEditor({
           return false;
         },
       },
-      onUpdate: ({ editor }) => {
-        const html = editor.getHTML();
-        const nextValue = editor.isEmpty ? "" : html;
+      onUpdate: (updateProps) => {
+        const editorInstance = updateProps?.editor;
+        if (!editorInstance) {
+          return;
+        }
+
+        const html = editorInstance.getHTML();
+        const nextValue = editorInstance.isEmpty ? "" : html;
 
         if (lastValueRef.current === nextValue) {
           return;
