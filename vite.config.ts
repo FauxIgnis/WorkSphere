@@ -4,9 +4,10 @@ import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: '/kodex-chef/',
+  
   plugins: [
     react(),
-    base: '/kodex-chef/',
     // The code below enables dev tools like taking screenshots of your site
     // while it is being developed on chef.convex.dev.
     // Feel free to remove this code if you're no longer developing your app with Chef.
