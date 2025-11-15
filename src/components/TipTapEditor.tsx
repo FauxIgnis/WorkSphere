@@ -582,7 +582,7 @@ export function TipTapEditor({
     editor.commands.setContent(normalized, false);
 
     if (editor.isDestroyed) {
-      lastValueRef.current = editor.isEmpty ? "" : editor.getHTML();
+      lastValueRef.current = normalized;
       return;
     }
 
