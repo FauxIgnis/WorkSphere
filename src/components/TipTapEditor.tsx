@@ -49,12 +49,12 @@ import { EmbedNodeView } from "./editor/nodes/EmbedNodeView";
 import { TableBubbleMenu } from "./editor/TableBubbleMenu";
 
 const lowlight = createLowlight();
-lowlight.registerLanguage("javascript", javascript);
-lowlight.registerLanguage("typescript", typescript);
-lowlight.registerLanguage("css", css);
-lowlight.registerLanguage("html", html);
-lowlight.registerLanguage("json", json);
-lowlight.registerLanguage("python", python);
+lowlight.register("javascript", javascript);
+lowlight.register("typescript", typescript);
+lowlight.register("css", css);
+lowlight.register("html", html);
+lowlight.register("json", json);
+lowlight.register("python", python);
 
 const ToggleExtension = Details.extend({
   name: "toggle",
