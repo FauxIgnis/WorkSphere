@@ -6,6 +6,7 @@ import path from "path";
 export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
+    base: '/kodex-chef/',
     // The code below enables dev tools like taking screenshots of your site
     // while it is being developed on chef.convex.dev.
     // Feel free to remove this code if you're no longer developing your app with Chef.
