@@ -3,7 +3,6 @@ import {
   EditorContent,
   useEditor,
   BubbleMenu,
-  FloatingMenu,
   ReactNodeViewRenderer,
 } from "@tiptap/react";
 import type { Editor as TipTapEditorInstance } from "@tiptap/react";
@@ -534,55 +533,3 @@ export function TipTapEditor({
           </BubbleMenu>
 
           <TableBubbleMenu editor={editor} />
-
-          <FloatingMenu
-            editor={editor}
-            className="rounded-lg border border-neutral-200 bg-white px-2 py-1 shadow-xl"
-            shouldShow={({ state }) => {
-              const { $from } = state.selection;
-              if (!$from.parent.isTextblock) return false;
-              return $from.parent.type.name === "paragraph" && $from.parent.childCount === 0;
-            }}
-          >
-            <div className="flex items-center gap-1 text-sm text-neutral-600">
-              <button
-                type="button"
-                onClick={() => safe(editor)?.toggleBulletList().run()}
-                className={blockBtn(editor.isActive("bulletList"))}
-              >
-                ● List
-              </button>
-              <button
-                type="button"
-                onClick={() => safe(editor)?.toggleOrderedList().run()}
-                className={blockBtn(editor.isActive("orderedList"))}
-              >
-                1. List
-              </button>
-              <button
-                type="button"
-                onClick={() => safe(editor)?.setCallout().run()}
-                className={blockBtn(editor.isActive("callout"))}
-              >
-                Callout
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const url = window.prompt("Embed URL");
-                  if (url) safe(editor)?.setEmbed({ url }).run();
-                }}
-                className={blockBtn(false)}
-              >
-                Embed
-              </button>
-            </div>
-          </FloatingMenu>
-
-          <EditorContent editor={editor} />
-        </>
-      )}
-    </div>
-  );
-}
-
