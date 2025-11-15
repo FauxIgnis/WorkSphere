@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { 
+import {
   XMarkIcon,
   CheckIcon,
   SparklesIcon,
-  CreditCardIcon
+  CreditCardIcon,
 } from "@heroicons/react/24/outline";
 
 interface SubscriptionModalProps {
@@ -16,15 +16,15 @@ interface SubscriptionModalProps {
   limit?: number;
 }
 
-export function SubscriptionModal({ 
-  isOpen, 
-  onClose, 
-  feature, 
-  currentUsage, 
-  limit 
+export function SubscriptionModal({
+  isOpen,
+  onClose,
+  feature,
+  currentUsage,
+  limit,
 }: SubscriptionModalProps) {
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const subscription = useQuery(api.subscriptions.getUserSubscription);
   const usage = useQuery(api.subscriptions.getUserUsage, {});
 
@@ -32,8 +32,6 @@ export function SubscriptionModal({
 
   const handleUpgrade = async () => {
     setIsLoading(true);
-    // In a real app, this would integrate with Stripe
-    // For now, we'll just show a message
     alert("Stripe integration would be implemented here. For demo purposes, this would redirect to payment.");
     setIsLoading(false);
   };
@@ -46,7 +44,7 @@ export function SubscriptionModal({
     "3 calendar events",
     "5 file uploads",
     "Basic document editing",
-    "Public document sharing"
+    "Public document sharing",
   ];
 
   const proFeatures = [
@@ -62,155 +60,134 @@ export function SubscriptionModal({
     "Audit log access",
     "Priority support",
     "Case management (30 docs, 50MB)",
-    "Workspace invitations & roles"
+    "Workspace invitations & roles",
   ];
 
+  const planLabel = subscription?.plan === "pro" ? "Pro" : "Free";
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 px-4 py-6 backdrop-blur-sm">
+      <div className="w-full max-w-4xl overflow-hidden rounded-3xl border border-neutral-200/70 bg-[#fdfcf8] shadow-2xl">
+        <div className="flex items-start justify-between border-b border-neutral-200/70 bg-white/70 px-8 py-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Upgrade to Pro</h2>
-            {feature && (
-              <p className="text-sm text-gray-600 mt-1">
-                You've reached your free tier limit for {feature} ({currentUsage}/{limit})
+            <div className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.4em] text-neutral-400">
+              <SparklesIcon className="h-4 w-4 text-indigo-500" />
+              Upgrade
+            </div>
+            <h2 className="mt-4 text-3xl font-semibold text-neutral-900">Upgrade to Pro</h2>
+            {feature ? (
+              <p className="mt-2 text-sm text-neutral-500">
+                You've reached your free tier limit for {feature} ({currentUsage}/{limit}). Unlock more usage by upgrading.
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-neutral-500">
+                Move beyond the basics with unlimited AI research, collaboration tools, and premium case management features.
               </p>
             )}
+            <p className="mt-4 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
+              Current Plan · {planLabel}
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+            aria-label="Close subscription modal"
           >
-            <XMarkIcon className="w-5 h-5 text-gray-500" />
+            <XMarkIcon className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Current Usage */}
         {usage && (
-          <div className="p-6 bg-gray-50 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Current Usage</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div className="bg-white p-3 rounded-lg">
-                <div className="text-sm text-gray-600">AI Questions</div>
-                <div className="text-lg font-semibold text-gray-900">
-                  {usage.aiQuestions}/10
+          <div className="border-b border-neutral-200/70 bg-[#f7f6f3]/60 px-8 py-6">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400">Your Usage Snapshot</h3>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              {[{
+                label: "AI Questions",
+                value: `${usage.aiQuestions}/10`,
+              }, {
+                label: "Tasks",
+                value: `${usage.tasksCreated}/3`,
+              }, {
+                label: "Documents",
+                value: `${usage.documentsCreated}/5`,
+              }, {
+                label: "PDF Exports",
+                value: `${usage.pdfExports}/1`,
+              }, {
+                label: "Calendar Events",
+                value: `${usage.calendarEvents}/3`,
+              }, {
+                label: "File Uploads",
+                value: `${usage.fileUploads}/5`,
+              }].map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-2xl border border-neutral-200 bg-white px-4 py-4 shadow-sm"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">{item.label}</p>
+                  <p className="mt-2 text-lg font-semibold text-neutral-900">{item.value}</p>
                 </div>
-              </div>
-              <div className="bg-white p-3 rounded-lg">
-                <div className="text-sm text-gray-600">Tasks</div>
-                <div className="text-lg font-semibold text-gray-900">
-                  {usage.tasksCreated}/3
-                </div>
-              </div>
-              <div className="bg-white p-3 rounded-lg">
-                <div className="text-sm text-gray-600">Documents</div>
-                <div className="text-lg font-semibold text-gray-900">
-                  {usage.documentsCreated}/5
-                </div>
-              </div>
-              <div className="bg-white p-3 rounded-lg">
-                <div className="text-sm text-gray-600">PDF Exports</div>
-                <div className="text-lg font-semibold text-gray-900">
-                  {usage.pdfExports}/1
-                </div>
-              </div>
-              <div className="bg-white p-3 rounded-lg">
-                <div className="text-sm text-gray-600">Calendar Events</div>
-                <div className="text-lg font-semibold text-gray-900">
-                  {usage.calendarEvents}/3
-                </div>
-              </div>
-              <div className="bg-white p-3 rounded-lg">
-                <div className="text-sm text-gray-600">File Uploads</div>
-                <div className="text-lg font-semibold text-gray-900">
-                  {usage.fileUploads}/5
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Pricing Plans */}
-        <div className="p-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Free Plan */}
-            <div className="border border-gray-200 rounded-lg p-6">
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">Free</h3>
-                <div className="text-3xl font-bold text-gray-900 mt-2">$0</div>
-                <div className="text-sm text-gray-600">per month</div>
+        <div className="px-8 py-8">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="rounded-3xl border border-neutral-200 bg-white/80 p-6 shadow-sm">
+              <div className="text-center">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">Free</p>
+                <h3 className="mt-2 text-3xl font-semibold text-neutral-900">$0</h3>
+                <p className="mt-1 text-sm text-neutral-500">per month</p>
               </div>
-              
-              <ul className="space-y-3 mb-6">
-                {freeFeatures.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <CheckIcon className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{feature}</span>
+              <ul className="mt-6 space-y-3">
+                {freeFeatures.map((item) => (
+                  <li key={item} className="flex items-start gap-3 text-sm text-neutral-600">
+                    <CheckIcon className="mt-0.5 h-5 w-5 text-emerald-500" />
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
-              
               <button
                 disabled
-                className="w-full py-2 px-4 bg-gray-100 text-gray-500 rounded-md cursor-not-allowed"
+                className="mt-6 w-full rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-400"
               >
                 Current Plan
               </button>
             </div>
 
-            {/* Pro Plan */}
-            <div className="border-2 border-blue-500 rounded-lg p-6 relative">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                  Recommended
-                </span>
+            <div className="relative rounded-3xl border-2 border-neutral-900 bg-white p-6 shadow-lg">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full border border-neutral-900 bg-neutral-900 px-4 py-1 text-xs font-semibold uppercase tracking-[0.4em] text-white">
+                Pro
               </div>
-              
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">Pro</h3>
-                <div className="text-3xl font-bold text-gray-900 mt-2">$30</div>
-                <div className="text-sm text-gray-600">per month</div>
+              <div className="text-center">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">Professional</p>
+                <h3 className="mt-2 text-3xl font-semibold text-neutral-900">$30</h3>
+                <p className="mt-1 text-sm text-neutral-500">per month</p>
               </div>
-              
-              <ul className="space-y-3 mb-6">
-                {proFeatures.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <CheckIcon className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-gray-700">{feature}</span>
+              <ul className="mt-6 space-y-3">
+                {proFeatures.map((item) => (
+                  <li key={item} className="flex items-start gap-3 text-sm text-neutral-600">
+                    <CheckIcon className="mt-0.5 h-5 w-5 text-emerald-500" />
+                    <span>{item}</span>
                   </li>
                 ))}
               </ul>
-              
               <button
                 onClick={handleUpgrade}
                 disabled={isLoading}
-                className="w-full py-3 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-neutral-900 px-4 py-3 text-sm font-medium text-neutral-100 transition hover:bg-neutral-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {isLoading ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <span className="inline-flex h-5 w-5 animate-spin rounded-full border-2 border-neutral-100 border-t-transparent" />
                 ) : (
                   <>
-                    <CreditCardIcon className="w-5 h-5 mr-2" />
+                    <CreditCardIcon className="h-5 w-5" />
                     Upgrade to Pro
                   </>
                 )}
               </button>
             </div>
-          </div>
-        </div>
-
-        {/* Benefits */}
-        <div className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 border-t border-gray-200">
-          <div className="text-center">
-            <SparklesIcon className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Unlock the Full Power of Kodex
-            </h3>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Get unlimited access to all features, advanced collaboration tools, 
-              and priority support to supercharge your legal workflow.
-            </p>
           </div>
         </div>
       </div>

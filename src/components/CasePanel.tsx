@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { 
+import {
   FolderIcon,
   PlusIcon,
   DocumentTextIcon,
@@ -11,7 +11,7 @@ import {
   XMarkIcon,
   CheckIcon,
   ExclamationTriangleIcon,
-  SparklesIcon
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { toast } from "sonner";
 
@@ -128,335 +128,411 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
     }
   };
 
-  const availableDocuments = userDocuments.filter(doc => 
-    doc && !doc.caseId && !caseDocuments.some(caseDoc => caseDoc._id === doc._id)
+  const availableDocuments = userDocuments.filter(
+    (doc) =>
+      doc && !doc.caseId && !caseDocuments.some((caseDoc) => caseDoc._id === doc._id)
   );
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
+    if (bytes === 0) return "0 B";
     const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-white">
-      {/* Header */}
-      <div className="border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Case Management</h2>
-            <p className="text-sm text-gray-600">
-              Organize documents into cases for AI-powered legal analysis
-            </p>
-          </div>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
-          >
-            <PlusIcon className="w-4 h-4 mr-2" />
-            New Case
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 flex">
-        {/* Cases List */}
-        <div className="w-80 border-r border-gray-200 bg-gray-50">
-          <div className="p-4">
-            <h3 className="font-medium text-gray-900 mb-4">Your Cases</h3>
-            
-            {showCreateForm && (
-              <form onSubmit={handleCreateCase} className="mb-4 p-4 bg-white rounded-lg border">
-                <input
-                  type="text"
-                  placeholder="Case name"
-                  value={newCaseName}
-                  onChange={(e) => setNewCaseName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
-                  autoFocus
-                />
-                <textarea
-                  placeholder="Description (optional)"
-                  value={newCaseDescription}
-                  onChange={(e) => setNewCaseDescription(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
-                  rows={2}
-                />
-                <div className="flex gap-2">
-                  <button
-                    type="submit"
-                    className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-                  >
-                    Create
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateForm(false)}
-                    className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded hover:bg-gray-400"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
-
-            <div className="space-y-2">
-              {cases.map((caseItem) => (
-                <div
-                  key={caseItem._id}
-                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                    selectedCaseId === caseItem._id
-                      ? 'bg-blue-50 border-blue-200'
-                      : 'bg-white border-gray-200 hover:bg-gray-50'
-                  }`}
-                  onClick={() => onCaseSelect(caseItem._id)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      {editingCase === caseItem._id ? (
-                        <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="text"
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                          />
-                          <textarea
-                            value={editDescription}
-                            onChange={(e) => setEditDescription(e.target.value)}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
-                            rows={2}
-                          />
-                          <div className="flex gap-1">
-                            <button
-                              onClick={() => handleUpdateCase(caseItem._id)}
-                              className="p-1 text-green-600 hover:bg-green-100 rounded"
-                            >
-                              <CheckIcon className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={() => setEditingCase(null)}
-                              className="p-1 text-gray-600 hover:bg-gray-100 rounded"
-                            >
-                              <XMarkIcon className="w-3 h-3" />
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <h4 className="text-sm font-medium text-gray-900 truncate">
-                            {caseItem.name}
-                          </h4>
-                          {caseItem.description && (
-                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                              {caseItem.description}
-                            </p>
-                          )}
-                          <div className="flex items-center justify-between mt-2">
-                            <div className="text-xs text-gray-500">
-                              {caseItem.documentCount}/30 docs • {formatFileSize(caseItem.totalSize)}/50MB
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingCase(caseItem._id);
-                                  setEditName(caseItem.name);
-                                  setEditDescription(caseItem.description || "");
-                                }}
-                                className="p-1 text-gray-600 hover:bg-gray-100 rounded"
-                              >
-                                <PencilIcon className="w-3 h-3" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteCase(caseItem._id, caseItem.name);
-                                }}
-                                className="p-1 text-red-600 hover:bg-red-100 rounded"
-                              >
-                                <TrashIcon className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
+    <div className="flex h-full flex-col overflow-hidden bg-[#fdfcf8]">
+      <div className="flex-1 overflow-hidden">
+        <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-6 px-6 py-8">
+          <div className="rounded-3xl border border-neutral-200/70 bg-white/90 px-6 py-5 shadow-sm backdrop-blur">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.4em] text-neutral-400">Case Management</p>
+                <h2 className="mt-2 text-2xl font-semibold text-neutral-900">Organize Your Matters</h2>
+                <p className="mt-1 text-sm text-neutral-500">
+                  Group related documents, collaborate with your team, and unlock AI insights per case.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-5 py-2 text-sm font-medium text-neutral-100 transition hover:bg-neutral-700"
+              >
+                <PlusIcon className="h-4 w-4" />
+                New Case
+              </button>
             </div>
           </div>
-        </div>
 
-        {/* Case Details */}
-        <div className="flex-1 flex flex-col">
-          {selectedCase ? (
-            <>
-              {/* Case Header */}
-              <div className="border-b border-gray-200 px-6 py-4">
+          <div className="flex flex-1 flex-col gap-6 lg:flex-row">
+            <div className="flex w-full flex-col rounded-3xl border border-neutral-200/70 bg-white shadow-sm lg:max-w-xs">
+              <div className="border-b border-neutral-200/70 px-5 py-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{selectedCase.name}</h3>
-                    {selectedCase.description && (
-                      <p className="text-sm text-gray-600 mt-1">{selectedCase.description}</p>
-                    )}
-                    <div className="flex items-center mt-2 text-sm text-gray-500">
-                      <span>{selectedCase.documentCount}/30 documents</span>
-                      <span className="mx-2">•</span>
-                      <span>{formatFileSize(selectedCase.totalSize)}/50MB used</span>
-                      {selectedCase.documentCount >= 30 && (
-                        <>
-                          <span className="mx-2">•</span>
-                          <ExclamationTriangleIcon className="w-4 h-4 text-amber-500 mr-1" />
-                          <span className="text-amber-600">Document limit reached</span>
-                        </>
-                      )}
-                    </div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">Your Cases</p>
+                    <p className="mt-1 text-sm text-neutral-500">{cases.length} active</p>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => setShowAIChat(!showAIChat)}
-                      className={`px-3 py-2 text-sm rounded-md hover:bg-purple-200 flex items-center transition-colors ${
-                        showAIChat 
-                          ? 'bg-purple-100 text-purple-700 border border-purple-200' 
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      <SparklesIcon className="w-4 h-4 mr-1" />
-                      Case AI Chat
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => setShowCreateForm(true)}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-800"
+                    title="Create case"
+                  >
+                    <PlusIcon className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
 
-              <div className="flex-1 flex">
-                {/* Documents in Case */}
-                <div className="flex-1 p-6">
-                  <div className="mb-6">
-                    <h4 className="text-md font-medium text-gray-900 mb-4">Documents in Case</h4>
-                    {caseDocuments.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500">
-                        <FolderIcon className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                        <p>No documents in this case yet</p>
-                        <p className="text-sm">Add documents from your library below</p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {caseDocuments.map((doc) => (
-                          <div key={doc._id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center">
-                                  <DocumentTextIcon className="w-5 h-5 text-blue-600 mr-2 flex-shrink-0" />
-                                  <h5 className="text-sm font-medium text-gray-900 truncate">
-                                    {doc.title}
-                                  </h5>
+              {showCreateForm && (
+                <div className="border-b border-neutral-200/70 bg-[#f7f6f3]/60 px-5 py-5">
+                  <form onSubmit={handleCreateCase} className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
+                        Case Name
+                      </label>
+                      <input
+                        type="text"
+                        value={newCaseName}
+                        onChange={(e) => setNewCaseName(e.target.value)}
+                        className="mt-2 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-700 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                        placeholder="e.g. Johnson vs. State"
+                        autoFocus
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
+                        Description
+                      </label>
+                      <textarea
+                        value={newCaseDescription}
+                        onChange={(e) => setNewCaseDescription(e.target.value)}
+                        className="mt-2 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-700 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                        rows={2}
+                        placeholder="Optional context or notes"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="submit"
+                        className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-neutral-100 transition hover:bg-neutral-700"
+                      >
+                        <CheckIcon className="h-3 w-3" />
+                        Save
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowCreateForm(false)}
+                        className="inline-flex items-center gap-2 rounded-full border border-neutral-200 px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+                      >
+                        <XMarkIcon className="h-3 w-3" />
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto px-5 py-5">
+                {cases.length === 0 ? (
+                  <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-[#f7f6f3]/60 px-4 py-12 text-center">
+                    <FolderIcon className="h-10 w-10 text-neutral-400" />
+                    <h3 className="mt-4 text-sm font-semibold text-neutral-900">No cases yet</h3>
+                    <p className="mt-2 text-xs text-neutral-500">
+                      Create your first case to start organizing documents and discussions.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {cases.map((caseItem) => (
+                      <div
+                        key={caseItem._id}
+                        className={`group rounded-2xl border px-4 py-4 transition ${
+                          selectedCaseId === caseItem._id
+                            ? "border-neutral-900 bg-neutral-900/90 text-neutral-100 shadow-sm"
+                            : "border-neutral-200 bg-white hover:border-neutral-300 hover:shadow-md"
+                        }`}
+                        onClick={() => onCaseSelect(caseItem._id)}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            {editingCase === caseItem._id ? (
+                              <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                  type="text"
+                                  value={editName}
+                                  onChange={(e) => setEditName(e.target.value)}
+                                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                                />
+                                <textarea
+                                  value={editDescription}
+                                  onChange={(e) => setEditDescription(e.target.value)}
+                                  className="w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                                  rows={2}
+                                />
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleUpdateCase(caseItem._id)}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900 text-neutral-100 transition hover:bg-neutral-700"
+                                  >
+                                    <CheckIcon className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingCase(null)}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+                                  >
+                                    <XMarkIcon className="h-4 w-4" />
+                                  </button>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-1">
-                                  Modified {new Date(doc.lastModifiedAt).toLocaleDateString()}
-                                </p>
                               </div>
-                              <button
-                                onClick={() => handleRemoveDocument(doc._id)}
-                                className="p-1 text-red-600 hover:bg-red-100 rounded ml-2"
-                                title="Remove from case"
-                              >
-                                <XMarkIcon className="w-4 h-4" />
-                              </button>
-                            </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <h4
+                                  className={`truncate text-sm font-semibold ${
+                                    selectedCaseId === caseItem._id
+                                      ? "text-neutral-100"
+                                      : "text-neutral-900"
+                                  }`}
+                                >
+                                  {caseItem.name}
+                                </h4>
+                                {caseItem.description && (
+                                  <p
+                                    className={`line-clamp-2 text-xs ${
+                                      selectedCaseId === caseItem._id
+                                        ? "text-neutral-200/90"
+                                        : "text-neutral-500"
+                                    }`}
+                                  >
+                                    {caseItem.description}
+                                  </p>
+                                )}
+                                <div
+                                  className={`flex items-center justify-between text-[11px] uppercase tracking-[0.25em] ${
+                                    selectedCaseId === caseItem._id
+                                      ? "text-neutral-200"
+                                      : "text-neutral-400"
+                                  }`}
+                                >
+                                  <span>
+                                    {caseItem.documentCount}/30 docs • {formatFileSize(caseItem.totalSize)}/50MB
+                                  </span>
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingCase(caseItem._id);
+                                        setEditName(caseItem.name);
+                                        setEditDescription(caseItem.description || "");
+                                      }}
+                                      className={`inline-flex h-7 w-7 items-center justify-center rounded-full border text-xs transition ${
+                                        selectedCaseId === caseItem._id
+                                          ? "border-neutral-700 text-neutral-200 hover:border-neutral-500"
+                                          : "border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:text-neutral-700"
+                                      }`}
+                                      title="Edit case"
+                                    >
+                                      <PencilIcon className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteCase(caseItem._id, caseItem.name);
+                                      }}
+                                      className={`inline-flex h-7 w-7 items-center justify-center rounded-full border text-xs transition ${
+                                        selectedCaseId === caseItem._id
+                                          ? "border-neutral-700 text-rose-200 hover:border-rose-400"
+                                          : "border-neutral-200 text-rose-500 hover:border-rose-300 hover:text-rose-600"
+                                      }`}
+                                      title="Delete case"
+                                    >
+                                      <TrashIcon className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        ))}
+                        </div>
                       </div>
-                    )}
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-hidden rounded-3xl border border-neutral-200/70 bg-white shadow-sm">
+              {selectedCase ? (
+                <div className={`flex h-full flex-col ${showAIChat ? "lg:grid lg:grid-cols-[1fr,320px]" : ""}`}>
+                  <div className="flex h-full flex-col">
+                    <div className="border-b border-neutral-200/70 bg-[#f7f6f3]/60 px-6 py-5">
+                      <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                          <h3 className="text-xl font-semibold text-neutral-900">{selectedCase.name}</h3>
+                          {selectedCase.description && (
+                            <p className="mt-2 text-sm text-neutral-500">{selectedCase.description}</p>
+                          )}
+                          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
+                            <span>{selectedCase.documentCount}/30 Documents</span>
+                            <span>•</span>
+                            <span>{formatFileSize(selectedCase.totalSize)}/50MB Used</span>
+                            {selectedCase.documentCount >= 30 && (
+                              <span className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-600">
+                                <ExclamationTriangleIcon className="h-4 w-4" />
+                                Limit Reached
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => setShowAIChat(!showAIChat)}
+                          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
+                            showAIChat
+                              ? "border-indigo-400 bg-indigo-50 text-indigo-600"
+                              : "border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:text-neutral-700"
+                          }`}
+                        >
+                          <SparklesIcon className="h-4 w-4" />
+                          Case AI Chat
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+                      <section>
+                        <div className="mb-4 flex items-center justify-between">
+                          <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400">Documents in Case</h4>
+                          <span className="text-xs text-neutral-400">{caseDocuments.length} total</span>
+                        </div>
+                        {caseDocuments.length === 0 ? (
+                          <div className="rounded-2xl border border-dashed border-neutral-200 bg-[#f7f6f3]/60 px-6 py-12 text-center">
+                            <FolderIcon className="mx-auto h-10 w-10 text-neutral-400" />
+                            <p className="mt-4 text-sm font-semibold text-neutral-900">No documents in this case yet</p>
+                            <p className="mt-2 text-xs text-neutral-500">Add documents from your library below to start collaborating.</p>
+                          </div>
+                        ) : (
+                          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                            {caseDocuments.map((doc) => (
+                              <div
+                                key={doc._id}
+                                className="rounded-2xl border border-neutral-200 bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-md"
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex min-w-0 flex-1 items-start gap-2">
+                                    <DocumentTextIcon className="h-5 w-5 text-neutral-500" />
+                                    <div className="min-w-0">
+                                      <h5 className="truncate text-sm font-semibold text-neutral-900">{doc.title}</h5>
+                                      <p className="mt-1 text-xs text-neutral-400">
+                                        Modified {new Date(doc.lastModifiedAt).toLocaleDateString()}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={() => handleRemoveDocument(doc._id)}
+                                    className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+                                    title="Remove from case"
+                                  >
+                                    <XMarkIcon className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </section>
+
+                      {availableDocuments.length > 0 && (
+                        <section>
+                          <div className="mb-4 flex items-center justify-between">
+                            <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400">Add Documents to Case</h4>
+                            <span className="text-xs text-neutral-400">{availableDocuments.length} available</span>
+                          </div>
+                          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                            {availableDocuments.map((doc) => {
+                              if (!doc) return null;
+                              return (
+                                <div
+                                  key={doc._id}
+                                  className="rounded-2xl border border-neutral-200 bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-md"
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div className="flex min-w-0 flex-1 items-start gap-2">
+                                      <DocumentTextIcon className="h-5 w-5 text-neutral-500" />
+                                      <div className="min-w-0">
+                                        <h5 className="truncate text-sm font-semibold text-neutral-900">{doc.title}</h5>
+                                        <p className="mt-1 text-xs text-neutral-400">
+                                          Modified {new Date(doc.lastModifiedAt).toLocaleDateString()}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <button
+                                      onClick={() => handleAddDocument(doc._id)}
+                                      disabled={selectedCase.documentCount >= 30}
+                                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:text-neutral-300"
+                                      title="Add to case"
+                                    >
+                                      <PlusIcon className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </section>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Available Documents */}
-                  {availableDocuments.length > 0 && (
-                    <div>
-                      <h4 className="text-md font-medium text-gray-900 mb-4">Add Documents to Case</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {availableDocuments.map((doc) => {
-                          if (!doc) return null;
-                          return (
-                            <div key={doc._id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center">
-                                    <DocumentTextIcon className="w-5 h-5 text-gray-600 mr-2 flex-shrink-0" />
-                                    <h5 className="text-sm font-medium text-gray-900 truncate">
-                                      {doc.title}
-                                    </h5>
-                                  </div>
-                                  <p className="text-xs text-gray-500 mt-1">
-                                    Modified {new Date(doc.lastModifiedAt).toLocaleDateString()}
-                                  </p>
-                                </div>
-                                <button
-                                  onClick={() => handleAddDocument(doc._id)}
-                                  disabled={selectedCase && selectedCase.documentCount >= 30}
-                                  className="p-1 text-green-600 hover:bg-green-100 rounded ml-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                  title="Add to case"
-                                >
-                                  <PlusIcon className="w-4 h-4" />
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
+                  {showAIChat && (
+                    <div className="hidden border-t border-neutral-200/70 bg-[#f7f6f3]/60 px-6 py-6 lg:block lg:h-full lg:border-l lg:border-t-0">
+                      <div className="flex h-full flex-col gap-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <SparklesIcon className="h-5 w-5 text-indigo-500" />
+                            <h3 className="text-sm font-semibold text-neutral-900">Case AI Assistant</h3>
+                          </div>
+                          <button
+                            onClick={() => setShowAIChat(false)}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+                          >
+                            <XMarkIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                        <p className="text-xs text-neutral-500">
+                          Ask questions about all {caseDocuments.length} documents inside this case. Summaries, comparisons, or cross-document analysis are just a prompt away.
+                        </p>
+                        <div className="flex-1 rounded-2xl border border-dashed border-neutral-200 bg-white/60 px-4 py-8 text-center">
+                          <SparklesIcon className="mx-auto h-10 w-10 text-indigo-400" />
+                          <h4 className="mt-4 text-sm font-semibold text-neutral-900">Case-wide AI Analysis</h4>
+                          <p className="mt-2 text-xs text-neutral-500">
+                            Launch the AI chat to explore arguments, highlight conflicts, or request summaries tailored to this case.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
-
-                {/* Case AI Chat */}
-                {showAIChat && (
-                  <div className="w-96 border-l border-gray-200 bg-white flex flex-col">
-                    <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-blue-50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <SparklesIcon className="w-5 h-5 text-purple-600 mr-2" />
-                          <h3 className="font-semibold text-gray-900">Case AI Assistant</h3>
-                        </div>
-                        <button
-                          onClick={() => setShowAIChat(false)}
-                          className="p-1 hover:bg-gray-100 rounded-full"
-                        >
-                          <XMarkIcon className="w-4 h-4 text-gray-500" />
-                        </button>
-                      </div>
-                      <p className="text-xs text-gray-600 mt-1">
-                        Ask questions about all documents in this case
-                      </p>
-                    </div>
-                    
-                    <div className="flex-1 p-4 bg-gray-50">
-                      <div className="text-center py-12">
-                        <SparklesIcon className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-                        <h4 className="text-sm font-medium text-gray-900 mb-2">
-                          Case-Wide AI Analysis
-                        </h4>
-                        <p className="text-xs text-gray-600 max-w-xs mx-auto leading-relaxed">
-                          Chat with AI about all {caseDocuments.length} documents in this case. 
-                          Ask for summaries, comparisons, or legal analysis across the entire case.
-                        </p>
-                      </div>
-                    </div>
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center px-6 py-12 text-center">
+                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm">
+                    <FolderIcon className="h-10 w-10 text-neutral-400" />
                   </div>
-                )}
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <FolderIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Case Selected</h3>
-                <p className="text-gray-600">Select a case from the sidebar or create a new one</p>
-              </div>
+                  <h3 className="mt-6 text-lg font-semibold text-neutral-900">No Case Selected</h3>
+                  <p className="mt-2 max-w-sm text-sm text-neutral-500">
+                    Select a case from the sidebar or create a new one to start organizing your legal materials.
+                  </p>
+                  <button
+                    onClick={() => setShowCreateForm(true)}
+                    className="mt-6 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-800"
+                  >
+                    <PlusIcon className="h-4 w-4" />
+                    Create a case
+                  </button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
