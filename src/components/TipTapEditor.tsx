@@ -564,6 +564,7 @@ export function TipTapEditor({
 
   useEffect(() => {
     if (!editor) return;
+    if (editor.isDestroyed) return;
     const normalized = value ?? "";
     if (lastValueRef.current === normalized) {
       return;
@@ -575,10 +576,17 @@ export function TipTapEditor({
       return;
     }
 
-    const { from, to } = editor.state.selection;
+    const selection = editor.state?.selection;
+    const from = selection?.from ?? 0;
+    const to = selection?.to ?? 0;
     editor.commands.setContent(normalized, false);
 
-    const docSize = Math.max(0, editor.state.doc.content.size);
+    if (editor.isDestroyed) {
+      lastValueRef.current = editor.isEmpty ? "" : editor.getHTML();
+      return;
+    }
+
+    const docSize = Math.max(0, editor.state?.doc.content.size ?? 0);
     const clampToDoc = (position: number) => {
       if (position < 0) {
         return 0;
