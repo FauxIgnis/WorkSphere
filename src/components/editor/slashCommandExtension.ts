@@ -31,99 +31,102 @@ export const SlashCommandExtension = Extension.create<SlashCommandExtensionOptio
   addProseMirrorPlugins() {
     return [
       Suggestion({
-  char: "/",
+        char: "/",
 
-  command: (payload) => {
-    const editor = payload?.editor;
-    const range = payload?.range;
-    const props = payload?.props;
+        command: (payload) => {
+          const editor = payload?.editor;
+          const range = payload?.range;
+          const props = payload?.props;
 
-    if (!editor || !range || !props) return false;
+          if (!editor || !range || !props) return false;
 
-    props.command({ editor, range });
-  },
+          props.command({ editor, range });
+        },
 
-  items: ({ query }) => {
-    const normalized = query.toLowerCase();
+        items: ({ query }) => {
+          const normalized = query.toLowerCase();
 
-    return this.options.items
-      .filter((item) => {
-        if (item.disabled) return false;
-        const haystack = [
-          item.title,
-          item.description ?? "",
-          ...(item.keywords ?? []),
-        ]
-          .join(" ")
-          .toLowerCase();
-        return haystack.includes(normalized);
-      })
-      .slice(0, 50);
-  },
+          return this.options.items
+            .filter((item) => {
+              if (item.disabled) return false;
+              const haystack = [
+                item.title,
+                item.description ?? "",
+                ...(item.keywords ?? []),
+              ]
+                .join(" ")
+                .toLowerCase();
+              return haystack.includes(normalized);
+            })
+            .slice(0, 50);
+        },
 
-  render: () => {
-    let component: ReactRenderer<SlashCommandListHandle> | null = null;
-    let popup: TippyInstance[] | null = null;
+        render: () => {
+          let component: ReactRenderer<SlashCommandListHandle> | null = null;
+          let popup: TippyInstance[] | null = null;
 
-    return {
-      onStart(props) {
-        if (!props?.editor) return;
+          return {
+            onStart(props) {
+              if (!props?.editor) return;
 
-        component = new ReactRenderer(SlashCommandList, {
-          props: {
-            items: props.items as SlashCommandItem[],
-            command: (item) => props.command(item),
-          },
-          editor: props.editor,
-        });
+              component = new ReactRenderer(SlashCommandList, {
+                props: {
+                  items: props.items as SlashCommandItem[],
+                  command: (item) => props.command(item),
+                },
+                editor: props.editor,
+              });
 
-        popup = tippy("body", {
-          getReferenceClientRect: props.clientRect as () => DOMRect,
-          appendTo: () => document.body,
-          content: component.element,
-          interactive: true,
-          trigger: "manual",
-          placement: "left-start",
-          arrow: false,
-          offset: [0, 12],
-        });
+              popup = tippy("body", {
+                getReferenceClientRect: props.clientRect as () => DOMRect,
+                appendTo: () => document.body,
+                content: component.element,
+                interactive: true,
+                trigger: "manual",
+                placement: "left-start",
+                arrow: false,
+                offset: [0, 12],
+              });
 
-        popup[0].show();
-      },
+              popup[0].show();
+            },
 
-      onUpdate(props) {
-        if (!props?.editor) return;
+            onUpdate(props) {
+              if (!props?.editor) return;
 
-        component?.updateProps({
-          items: props.items as SlashCommandItem[],
-          command: (item: SlashCommandItem) => props.command(item),
-        });
+              component?.updateProps({
+                items: props.items as SlashCommandItem[],
+                command: (item: SlashCommandItem) => props.command(item),
+              });
 
-        popup?.[0].setProps({
-          getReferenceClientRect: props.clientRect as () => DOMRect,
-        });
-      },
+              popup?.[0].setProps({
+                getReferenceClientRect: props.clientRect as () => DOMRect,
+              });
+            },
 
-      onKeyDown(props) {
-        if (!props?.editor) return false;
+            onKeyDown(props) {
+              if (!props?.editor) return false;
 
-        if (props.event.key === "Escape") {
-          popup?.[0].hide();
-          return true;
-        }
+              if (props.event.key === "Escape") {
+                popup?.[0].hide();
+                return true;
+              }
 
-        const handled = component?.ref?.onKeyDown({ event: props.event });
-        if (handled) return true;
+              const handled = component?.ref?.onKeyDown({ event: props.event });
+              if (handled) return true;
 
-        return false;
-      },
+              return false;
+            },
 
-      onExit() {
-        popup?.[0]?.destroy?.();
-        popup = null;
-        component?.destroy?.();
-        component = null;
-      },
-    };
+            onExit() {
+              popup?.[0]?.destroy?.();
+              popup = null;
+              component?.destroy?.();
+              component = null;
+            },
+          };
+        },
+      }),
+    ];
   },
 });
