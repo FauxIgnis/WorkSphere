@@ -529,6 +529,21 @@ export function TipTapEditor({
               >
                 <CodeBracketIcon className="h-4 w-4" />
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const href = window.prompt("Enter URL:");
+                  if (!href) return;
+
+                  safe(editor)
+                    ?.extendMarkRange("link")
+                    .setLink({ href })
+                    .run();
+                }}
+                className={menuBtn(editor.isActive("link"))}
+                >
+                <LinkIcon className="h-4 w-4" />
+              </button>
             </div>
           </BubbleMenu>
 
