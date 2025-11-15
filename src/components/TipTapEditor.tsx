@@ -528,14 +528,6 @@ export function TipTapEditor({
 
         <button
           type="button"
-          onClick={() => safe(editor)?.toggleCode().run()}
-          className={menuBtn(editor.isActive("code"))}
-        >
-          <CodeBracketIcon className="h-4 w-4" />
-        </button>
-
-        <button
-          type="button"
           onClick={() => {
             const href = window.prompt("Enter URL:");
             if (!href) return;
