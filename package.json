@@ -13,6 +13,9 @@
   "dependencies": {
     "@convex-dev/auth": "^0.0.80",
     "@heroicons/react": "^2.2.0",
+    "@tiptap/extension-placeholder": "^2.7.2",
+    "@tiptap/react": "^2.7.2",
+    "@tiptap/starter-kit": "^2.7.2",
     "clsx": "^2.1.1",
     "convex": "^1.24.2",
     "openai": "^6.8.1",

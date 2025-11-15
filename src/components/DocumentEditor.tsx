@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
@@ -18,6 +18,41 @@ import {
 } from "@heroicons/react/24/outline";
 import { toast } from "sonner";
 import { AIChatSidebar } from "./AIChatSidebar";
+import { TipTapEditor } from "./TipTapEditor";
+
+const HTML_TAG_REGEX = /<\/?[a-z][^>]*>/i;
+
+const escapeHtml = (input: string) =>
+  input
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+const normalizeDocumentContent = (rawContent: string | null | undefined) => {
+  if (!rawContent) return "";
+
+  if (HTML_TAG_REGEX.test(rawContent)) {
+    return rawContent;
+  }
+
+  const paragraphs = rawContent.split(/\n{2,}/);
+
+  return paragraphs
+    .map((paragraph) => {
+      if (!paragraph.trim()) {
+        return "<p><br /></p>";
+      }
+
+      const lines = paragraph
+        .split(/\n/)
+        .map((line) => escapeHtml(line.trimEnd()));
+
+      return `<p>${lines.join("<br />")}</p>`;
+    })
+    .join("");
+};
 
 interface DocumentEditorProps {
   documentId: string | null;
@@ -64,9 +99,10 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
 
   useEffect(() => {
     if (document) {
-      setContent(document.content);
+      const normalizedContent = normalizeDocumentContent(document.content);
+      setContent(normalizedContent);
       setTitle(document.title);
-      lastContentRef.current = document.content;
+      lastContentRef.current = normalizedContent;
       lastTitleRef.current = document.title;
       setIsEditingTitle(false);
       setHasUnsavedChanges(false);
@@ -130,6 +166,18 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
     setContent(newContent);
     setHasUnsavedChanges(true);
   };
+
+  const plainTextContent = useMemo(() => {
+    if (!content) return "";
+
+    if (typeof window === "undefined") {
+      return content.replace(/<[^>]+>/g, " ").trim();
+    }
+
+    const temp = document.createElement("div");
+    temp.innerHTML = content;
+    return temp.textContent || temp.innerText || "";
+  }, [content]);
 
   const handleTitleChange = (newTitle: string) => {
     setTitle(newTitle);
@@ -232,7 +280,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
 
   const exportToPDF = () => {
     if (!document) return;
-    
+
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
@@ -242,12 +290,17 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
               h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
-              .content { white-space: pre-wrap; }
+              .content { font-size: 16px; line-height: 1.75; color: #27272a; }
+              .content h1, .content h2, .content h3, .content h4 { margin-top: 32px; }
+              .content ul, .content ol { padding-left: 20px; }
+              .content blockquote { border-left: 4px solid #d4d4d8; padding-left: 16px; color: #52525b; }
+              .content pre { background: #111827; color: #f8fafc; padding: 16px; border-radius: 12px; }
+              .content code { background: #f4f4f5; padding: 4px 6px; border-radius: 6px; }
             </style>
           </head>
           <body>
             <h1>${document.title}</h1>
-            <div class="content">${document.content}</div>
+            <div class="content">${content}</div>
           </body>
         </html>
       `);
@@ -395,12 +448,10 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
               <UsersIcon className="h-5 w-5 text-neutral-400" />
               <span>Collaborate with your team and keep every update in one place.</span>
             </div>
-            <textarea
+            <TipTapEditor
               value={content}
-              onChange={(e) => handleContentChange(e.target.value)}
-              className="w-full min-h-[60vh] resize-none border-none bg-transparent text-[16px] leading-7 text-neutral-800 outline-none placeholder:text-neutral-400"
+              onChange={handleContentChange}
               placeholder="Type '/' for commands or start writing..."
-              style={{ fontFamily: 'Inter, "Helvetica Neue", sans-serif' }}
             />
           </div>
         </div>
@@ -484,7 +535,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
           isOpen={showAIChat}
           onClose={() => setShowAIChat(false)}
           documentId={documentId}
-          documentContent={content}
+          documentContent={plainTextContent}
         />
       </div>
 
