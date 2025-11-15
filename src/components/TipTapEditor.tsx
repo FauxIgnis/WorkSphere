@@ -489,64 +489,66 @@ export function TipTapEditor({
       ) : (
         <>
   <BubbleMenu
-    editor={editor}
-    tippyOptions={{ duration: 100, offset: [0, 8] }}
-    className="rounded-full bg-neutral-900/95 px-2 py-1 shadow-xl"
-  >
-    <div className="flex items-center gap-1">
-      <button
-        type="button"
-        onClick={() => safe(editor)?.toggleBold().run()}
-        className={menuBtn(editor.isActive("bold"))}
-      >
-        <strong>B</strong>
-      </button>
+  editor={editor}
+  tippyOptions={{ duration: 100, offset: [0, 8] }}
+  className="rounded-full bg-neutral-900/95 px-2 py-1 shadow-xl"
+>
+  <div className="flex items-center gap-1">
+    <button
+      type="button"
+      onClick={() => safe(editor)?.toggleBold().run()}
+      className={menuBtn(editor.isActive("bold"))}
+    >
+      <strong>B</strong>
+    </button>
 
-      <button
-        type="button"
-        onClick={() => safe(editor)?.toggleItalic().run()}
-        className={menuBtn(editor.isActive("italic"))}
-      >
-        <em>I</em>
-      </button>
+    <button
+      type="button"
+      onClick={() => safe(editor)?.toggleItalic().run()}
+      className={menuBtn(editor.isActive("italic"))}
+    >
+      <em>I</em>
+    </button>
 
-      <button
-        type="button"
-        onClick={() => safe(editor)?.toggleUnderline().run()}
-        className={menuBtn(editor.isActive("underline"))}
-      >
-        <span className="underline">U</span>
-      </button>
+    <button
+      type="button"
+      onClick={() => safe(editor)?.toggleUnderline().run()}
+      className={menuBtn(editor.isActive("underline"))}
+    >
+      <span className="underline">U</span>
+    </button>
 
-      <button
-        type="button"
-        onClick={() => safe(editor)?.toggleStrike().run()}
-        className={menuBtn(editor.isActive("strike"))}
-      >
-        <span className="line-through">S</span>
-      </button>
+    <button
+      type="button"
+      onClick={() => safe(editor)?.toggleStrike().run()}
+      className={menuBtn(editor.isActive("strike"))}
+    >
+      <span className="line-through">S</span>
+    </button>
 
-      <button
-        type="button"
-        onClick={() => safe(editor)?.toggleCode().run()}
-        className={menuBtn(editor.isActive("code"))}
-      >
-        <CodeBracketIcon className="h-4 w-4" />
-      </button>
+    <button
+      type="button"
+      onClick={() => safe(editor)?.toggleCode().run()}
+      className={menuBtn(editor.isActive("code"))}
+    >
+      <CodeBracketIcon className="h-4 w-4" />
+    </button>
 
-      <button
-        type="button"
-        onClick={() => {
-          const href = window.prompt("Enter URL:");
-          if (!href) return;
-          safe(editor)?.extendMarkRange("link").setLink({ href }).run();
-        }}
-        className={menuBtn(editor.isActive("link"))}
-      >
-        <LinkIcon className="h-4 w-4" />
-      </button>
-    </div>
-  </BubbleMenu>
+    <button
+      type="button"
+      onClick={() => {
+        const href = window.prompt("Enter URL:");
+        if (!href) return;
+        safe(editor)?.extendMarkRange("link").setLink({ href }).run();
+      }}
+      className={menuBtn(editor.isActive("link"))}
+    >
+      <LinkIcon className="h-4 w-4" />
+    </button>
+  </div>
+</BubbleMenu>
 
-  <TableBubbleMenu editor={editor} />
+<TableBubbleMenu editor={editor} />
 </>
+)}
+</div>
