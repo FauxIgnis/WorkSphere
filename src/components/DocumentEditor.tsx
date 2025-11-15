@@ -2,9 +2,9 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { 
-  ShareIcon, 
-  ClockIcon, 
+import {
+  ShareIcon,
+  ClockIcon,
   ChatBubbleLeftIcon,
   DocumentArrowDownIcon,
   UsersIcon,
@@ -19,40 +19,7 @@ import {
 import { toast } from "sonner";
 import { AIChatSidebar } from "./AIChatSidebar";
 import { TipTapEditor } from "./TipTapEditor";
-
-const HTML_TAG_REGEX = /<\/?[a-z][^>]*>/i;
-
-const escapeHtml = (input: string) =>
-  input
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-
-const normalizeDocumentContent = (rawContent: string | null | undefined) => {
-  if (!rawContent) return "";
-
-  if (HTML_TAG_REGEX.test(rawContent)) {
-    return rawContent;
-  }
-
-  const paragraphs = rawContent.split(/\n{2,}/);
-
-  return paragraphs
-    .map((paragraph) => {
-      if (!paragraph.trim()) {
-        return "<p><br /></p>";
-      }
-
-      const lines = paragraph
-        .split(/\n/)
-        .map((line) => escapeHtml(line.trimEnd()));
-
-      return `<p>${lines.join("<br />")}</p>`;
-    })
-    .join("");
-};
+import { normalizeDocumentContent } from "../lib/documentContent";
 
 interface DocumentEditorProps {
   documentId: string | null;
@@ -76,7 +43,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
   const lastContentRef = useRef("");
   const lastTitleRef = useRef("");
 
-  const document = useQuery(
+  const currentDocument = useQuery(
     api.documents.getDocument,
     documentId ? { documentId: documentId as Id<"documents"> } : "skip"
   );
@@ -98,17 +65,17 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
   const deleteDocument = useMutation(api.documents.deleteDocument);
 
   useEffect(() => {
-    if (document) {
-      const normalizedContent = normalizeDocumentContent(document.content);
+    if (currentDocument) {
+      const normalizedContent = normalizeDocumentContent(currentDocument.content);
       setContent(normalizedContent);
-      setTitle(document.title);
+      setTitle(currentDocument.title);
       lastContentRef.current = normalizedContent;
-      lastTitleRef.current = document.title;
+      lastTitleRef.current = currentDocument.title;
       setIsEditingTitle(false);
       setHasUnsavedChanges(false);
-      setLastSaved(new Date(document.lastModifiedAt));
+      setLastSaved(new Date(currentDocument.lastModifiedAt));
     }
-  }, [document]);
+  }, [currentDocument]);
 
   // Auto-save functionality
   const performAutoSave = useCallback(async () => {
@@ -162,10 +129,27 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
     };
   }, [hasUnsavedChanges, performAutoSave]);
 
-  const handleContentChange = (newContent: string) => {
-    setContent(newContent);
-    setHasUnsavedChanges(true);
-  };
+  const handleContentChange = useCallback(
+    (newContent: string) => {
+      setContent(newContent);
+      if (newContent !== lastContentRef.current) {
+        setHasUnsavedChanges(true);
+      }
+    },
+    [lastContentRef]
+  );
+
+  const plainTextContent = useMemo(() => {
+    if (!content) return "";
+
+    if (typeof window === "undefined") {
+      return content.replace(/<[^>]+>/g, " ").trim();
+    }
+
+    const temp = window.document.createElement("div");
+    temp.innerHTML = content;
+    return temp.textContent || temp.innerText || "";
+  }, [content]);
 
   const plainTextContent = useMemo(() => {
     if (!content) return "";
@@ -279,14 +263,14 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
   };
 
   const exportToPDF = () => {
-    if (!document) return;
+    if (!currentDocument) return;
 
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
         <html>
           <head>
-            <title>${document.title}</title>
+            <title>${currentDocument.title}</title>
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
               h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
@@ -299,7 +283,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
             </style>
           </head>
           <body>
-            <h1>${document.title}</h1>
+            <h1>${currentDocument.title}</h1>
             <div class="content">${content}</div>
           </body>
         </html>
@@ -321,7 +305,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
     );
   }
 
-  if (!document) {
+  if (!currentDocument) {
     return (
       <div className="flex h-full flex-1 items-center justify-center bg-[#fdfcf8]">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-700" />
@@ -337,7 +321,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
             <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-neutral-400">
               <span>Document</span>
               <span className="text-neutral-300">•</span>
-              <span>Version {document.version}</span>
+              <span>Version {currentDocument.version}</span>
             </div>
             {isEditingTitle ? (
               <input
@@ -354,7 +338,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
                 className="mt-3 cursor-text text-3xl font-semibold text-neutral-900 transition hover:text-neutral-700"
                 onClick={() => setIsEditingTitle(true)}
               >
-                {document.title}
+                {currentDocument.title}
               </h1>
             )}
             <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-neutral-500">
@@ -370,7 +354,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
               <span className="text-neutral-300">•</span>
               <span className="inline-flex items-center gap-1">
                 <EyeIcon className="h-4 w-4 text-neutral-400" />
-                {document.isPublic ? 'Public page' : 'Private page'}
+                {currentDocument.isPublic ? 'Public page' : 'Private page'}
               </span>
               {isAutoSaving && (
                 <>
@@ -449,6 +433,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
               <span>Collaborate with your team and keep every update in one place.</span>
             </div>
             <TipTapEditor
+              key={documentId ?? "new-document"}
               value={content}
               onChange={handleContentChange}
               placeholder="Type '/' for commands or start writing..."
@@ -466,7 +451,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
                 <div key={version._id} className="border-b border-neutral-200 px-4 py-4 text-sm">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-neutral-700">Version {version.version}</span>
-                    {version.version !== document.version && (
+                    {version.version !== currentDocument.version && (
                       <button
                         onClick={() => handleRollback(version.version)}
                         className="text-xs font-medium text-neutral-500 transition hover:text-neutral-800"

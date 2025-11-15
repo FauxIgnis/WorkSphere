@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useParams } from "react-router-dom";
 import { DocumentArrowDownIcon } from "@heroicons/react/24/outline";
+import { normalizeDocumentContent } from "./lib/documentContent";
 
 export function SharedDocument() {
   const { shareableLink } = useParams<{ shareableLink: string }>();
@@ -13,6 +14,11 @@ export function SharedDocument() {
     shareableLink ? { shareableLink } : "skip"
   );
 
+  const formattedContent = useMemo(
+    () => normalizeDocumentContent(document?.content),
+    [document?.content]
+  );
+
   useEffect(() => {
     if (shareableLink && document === null) {
       setNotFound(true);
@@ -21,7 +27,7 @@ export function SharedDocument() {
 
   const exportToPDF = () => {
     if (!document) return;
-    
+
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
@@ -31,12 +37,12 @@ export function SharedDocument() {
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
               h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; }
-              .content { white-space: pre-wrap; }
+              .content p { margin: 0 0 1em; }
             </style>
           </head>
           <body>
             <h1>${document.title}</h1>
-            <div class="content">${document.content}</div>
+            <div class="content">${formattedContent || "<p>This document is empty.</p>"}</div>
           </body>
         </html>
       `);
@@ -99,12 +105,13 @@ export function SharedDocument() {
           </div>
           
           <div className="prose max-w-none">
-            <div 
-              className="whitespace-pre-wrap text-gray-900 leading-relaxed"
+            <div
+              className="text-gray-900 leading-relaxed"
               style={{ fontFamily: 'Georgia, serif' }}
-            >
-              {document.content || "This document is empty."}
-            </div>
+              dangerouslySetInnerHTML={{
+                __html: formattedContent || "<p>This document is empty.</p>",
+              }}
+            />
           </div>
         </div>
       </div>
