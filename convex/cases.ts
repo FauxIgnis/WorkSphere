@@ -328,8 +328,6 @@ const aiResponse = await ctx.actions.internal.cases.generateAIReply({
   userMessage: args.content,
 });
 
-
-
     // 3. Save AI message
     const aiMsgId = await ctx.db.insert("chatMessages", {
       content: aiResponse,
