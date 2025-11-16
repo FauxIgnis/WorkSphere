@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation, action } from "convex/server";
+import { query, mutation, action } from "./_generated/server";
 
 async function getAuthenticatedUser(ctx: any) {
   const userId = await getAuthUserId(ctx);
