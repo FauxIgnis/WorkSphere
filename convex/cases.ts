@@ -7,9 +7,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 
 async function getAuthenticatedUser(ctx: any) {
   const userId = await getAuthUserId(ctx);
-  if (!userId) {
-    throw new Error("Not authenticated");
-  }
+  if (!userId) throw new Error("Not authenticated");
   return userId;
 }
 
@@ -249,42 +247,50 @@ export const deleteCase = mutation({
   },
 });
 
-/** -------------- AI MESSAGE -------------- */
+/** -------------- AI MESSAGE (ACTION) -------------- */
 
-export const sendMessageToCaseAI = mutation({
+export const sendMessageToCaseAI = action({
   args: {
     caseId: v.id("cases"),
     content: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthenticatedUser(ctx);
+    const userId = await ctx.runQuery(internal.auth.getUserId, {});
+    if (!userId) throw new Error("Not authenticated");
 
-    const caseDoc = await ctx.db.get(args.caseId);
+    const caseDoc = await ctx.runQuery(internal.cases.getCase, {
+      caseId: args.caseId,
+    });
+
     if (!caseDoc || caseDoc.createdBy !== userId)
       throw new Error("Case not found or access denied");
 
     const timestamp = Date.now();
 
-    const userMsgId = await ctx.db.insert("chatMessages", {
-      content: args.content,
-      authorId: userId,
-      caseId: args.caseId,
-      isAI: false,
-      timestamp,
-    });
+    const userMsgId = await ctx.runMutation(
+      internal.chatMessages.insertUserMessage,
+      {
+        content: args.content,
+        caseId: args.caseId,
+        authorId: userId,
+        timestamp,
+      }
+    );
 
     const aiResponse = await ctx.actions.internal.cases.generateAIReply({
       caseId: args.caseId,
       userMessage: args.content,
     });
 
-    const aiMsgId = await ctx.db.insert("chatMessages", {
-      content: aiResponse,
-      authorId: userId,
-      caseId: args.caseId,
-      isAI: true,
-      timestamp: Date.now(),
-    });
+    const aiMsgId = await ctx.runMutation(
+      internal.chatMessages.insertAIMessage,
+      {
+        content: aiResponse,
+        caseId: args.caseId,
+        authorId: userId,
+        timestamp: Date.now(),
+      }
+    );
 
     return { userMsgId, aiMsgId, aiResponse };
   },
