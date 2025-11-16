@@ -50,7 +50,7 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
   const [userMessage, setUserMessage] = useState("");
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [isUploadingCaseFile, setIsUploadingCaseFile] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const chatMessagesContainerRef = useRef<HTMLDivElement | null>(null);
   const caseFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const cases = useQuery(api.cases.getUserCases) || [];
@@ -109,12 +109,16 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
 
   useEffect(() => {
     if (!showAIChat) return;
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const container = chatMessagesContainerRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
   }, [messages, showAIChat]);
 
   const scrollChatToBottom = () => {
     requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      const container = chatMessagesContainerRef.current;
+      if (!container) return;
+      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
     });
   };
 
@@ -777,7 +781,10 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                       </div>
 
                       <div className="flex h-full flex-col px-6 py-4">
-                        <div className="flex-1 space-y-4 overflow-y-auto pr-1">
+                        <div
+                          ref={chatMessagesContainerRef}
+                          className="flex-1 space-y-4 overflow-y-auto pr-1"
+                        >
                           {messages.length === 0 && !isSendingMessage ? (
                             <div className="mt-8 rounded-2xl border border-dashed border-neutral-200 bg-white/80 px-4 py-6 text-center text-xs text-neutral-500">
                               Ask questions about all documents in this case to receive tailored insights.
@@ -831,7 +838,6 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                               Waiting for AI response...
                             </div>
                           )}
-                          <div ref={messagesEndRef} />
                         </div>
 
                         <div className="mt-4 border-t border-neutral-200/70 pt-4">
