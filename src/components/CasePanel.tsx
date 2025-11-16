@@ -12,6 +12,9 @@ import {
   CheckIcon,
   ExclamationTriangleIcon,
   SparklesIcon,
+  ArrowUpTrayIcon,
+  PaperClipIcon,
+  ArrowDownTrayIcon,
 } from "@heroicons/react/24/outline";
 import { toast } from "sonner";
 
@@ -46,7 +49,9 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
   const [messages, setMessages] = useState<CaseChatMessage[]>([]);
   const [userMessage, setUserMessage] = useState("");
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [isUploadingCaseFile, setIsUploadingCaseFile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const caseFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const cases = useQuery(api.cases.getUserCases) || [];
   const selectedCase = useQuery(
@@ -62,6 +67,11 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
     selectedCaseId ? { caseId: selectedCaseId as Id<"cases"> } : "skip"
   );
   const userDocuments = useQuery(api.documents.listUserDocuments) || [];
+  const caseFiles =
+    useQuery(
+      api.files.getCaseFiles,
+      selectedCaseId ? { caseId: selectedCaseId as Id<"cases"> } : "skip"
+    ) || [];
 
   const createCase = useMutation(api.cases.createCase);
   const updateCase = useMutation(api.cases.updateCase);
@@ -69,6 +79,9 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
   const addDocumentToCase = useMutation(api.cases.addDocumentToCase);
   const removeDocumentFromCase = useMutation(api.cases.removeDocumentFromCase);
   const sendMessageToCaseAI = useMutation(api.cases.sendMessageToCaseAI);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const saveFile = useMutation(api.files.saveFile);
+  const deleteCaseFile = useMutation(api.files.deleteFile);
 
   useEffect(() => {
     if (!selectedCaseId) {
@@ -218,6 +231,83 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
       toast.error(error?.message || "Failed to send message to Case AI");
     } finally {
       setIsSendingMessage(false);
+    }
+  };
+
+  const handleCaseFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    if (!selectedCaseId) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Only PDF or Word files can be uploaded");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("File size must be less than 15MB");
+      event.target.value = "";
+      return;
+    }
+
+    setIsUploadingCaseFile(true);
+
+    try {
+      const uploadUrl = await generateUploadUrl();
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const { storageId } = await uploadResponse.json();
+
+      await saveFile({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        storageId,
+        caseId: selectedCaseId as Id<"cases">,
+      });
+
+      toast.success("File uploaded to case");
+    } catch (error) {
+      console.error("Case file upload error", error);
+      toast.error("Failed to upload file");
+    } finally {
+      if (caseFileInputRef.current) {
+        caseFileInputRef.current.value = "";
+      }
+      setIsUploadingCaseFile(false);
+    }
+  };
+
+  const handleDeleteCaseFileClick = async (fileId: string, fileName: string) => {
+    if (
+      !confirm(`Delete the file "${fileName}" from this case? This cannot be undone.`)
+    ) {
+      return;
+    }
+
+    try {
+      await deleteCaseFile({ fileId: fileId as Id<"files"> });
+      toast.success("File deleted");
+    } catch (error) {
+      console.error("Delete case file error", error);
+      toast.error("Failed to delete file");
     }
   };
 
@@ -581,6 +671,93 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                           </div>
                         </section>
                       )}
+
+                      <section>
+                        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400">
+                              Case Files
+                            </h4>
+                            <p className="text-xs text-neutral-400">
+                              Upload optional Word or PDF files for this case
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              ref={caseFileInputRef}
+                              type="file"
+                              accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                              className="hidden"
+                              onChange={handleCaseFileChange}
+                              disabled={isUploadingCaseFile}
+                            />
+                            <button
+                              onClick={() => caseFileInputRef.current?.click()}
+                              disabled={isUploadingCaseFile}
+                              className="inline-flex items-center gap-2 rounded-full border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-900 disabled:cursor-not-allowed disabled:border-neutral-200"
+                            >
+                              <ArrowUpTrayIcon className="h-4 w-4" />
+                              {isUploadingCaseFile ? "Uploading..." : "Upload"}
+                            </button>
+                          </div>
+                        </div>
+
+                        {caseFiles.length === 0 ? (
+                          <div className="rounded-2xl border border-dashed border-neutral-200 bg-[#f7f6f3]/60 px-6 py-6 text-center">
+                            <PaperClipIcon className="mx-auto h-8 w-8 text-neutral-400" />
+                            <p className="mt-3 text-sm font-semibold text-neutral-900">No files uploaded yet</p>
+                            <p className="mt-1 text-xs text-neutral-500">Attach briefs, filings, or supporting records as needed.</p>
+                          </div>
+                        ) : (
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            {caseFiles.map((file) => (
+                              <div
+                                key={file._id}
+                                className="rounded-2xl border border-neutral-200 bg-white px-4 py-4 shadow-sm"
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="flex flex-1 items-start gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-neutral-100">
+                                      <PaperClipIcon className="h-5 w-5 text-neutral-500" />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="truncate text-sm font-semibold text-neutral-900">
+                                        {file.name}
+                                      </p>
+                                      <p className="mt-1 text-xs text-neutral-500">
+                                        {formatFileSize(file.size)} • {file.type.includes("pdf") ? "PDF" : "Word"}
+                                      </p>
+                                      {file.uploader?.name && (
+                                        <p className="text-[11px] uppercase tracking-[0.2em] text-neutral-400">
+                                          Uploaded by {file.uploader.name}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <a
+                                      href={file.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+                                      title="Download"
+                                    >
+                                      <ArrowDownTrayIcon className="h-4 w-4" />
+                                    </a>
+                                    <button
+                                      onClick={() => handleDeleteCaseFileClick(file._id, file.name)}
+                                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+                                      title="Delete file"
+                                    >
+                                      <TrashIcon className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </section>
                     </div>
                   </div>
 
