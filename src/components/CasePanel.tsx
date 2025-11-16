@@ -892,13 +892,13 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
         <ExclamationTriangleIcon className="h-4 w-4" />
         Add at least one document to use the AI chat.
       </div>
-    </div>        {/* ← закрываем внешний див ветки else */}
+    </div>        
   )}
-</div>            {/* ← закрываем border-t контейнер */}
-</div>            {/* ← закрываем inner flex-колонку */}
+</div>            
+</div>            
 </aside>
-)}               {/* ← закрываем {showAIChat && (...) } */}
-</div>           {/* ← закрываем div с классом `flex h-full flex-col ...` */}
+)}               
+</div>           
 ) : (
                 <div className="flex h-full flex-col items-center justify-center px-6 py-12 text-center">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm">
