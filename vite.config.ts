@@ -4,7 +4,7 @@ import path from "path";
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: '/kodex-chef/',
+  base: '/WorkSphere/',
   
   plugins: [
     react(),
