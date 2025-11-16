@@ -82,14 +82,14 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
     if (!caseMessagesData) return;
 
     const normalizedMessages: CaseChatMessage[] = [...caseMessagesData]
-      .sort((a, b) => a.createdAt - b.createdAt)
-      .map((msg) => ({
-        id: String(msg._id ?? msg.id ?? msg.createdAt),
-        role: msg.role,
-        text: msg.text,
-        createdAt: msg.createdAt,
-        sources: msg.fragments || msg.sources || [],
-      }));
+  .sort((a, b) => a.timestamp - b.timestamp)
+  .map((msg) => ({
+    id: String(msg._id ?? msg.id ?? msg.timestamp),
+    role: msg.isAI ? "assistant" : "user",
+    text: msg.content,
+    createdAt: msg.timestamp,
+    sources: [],
+  }));
 
     setMessages(normalizedMessages);
   }, [caseMessagesData]);
@@ -211,7 +211,7 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
     try {
       await sendMessageToCaseAI({
         caseId: selectedCaseId as Id<"cases">,
-        question: trimmedMessage,
+        content: trimmedMessage,
       });
     } catch (error: any) {
       setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));
