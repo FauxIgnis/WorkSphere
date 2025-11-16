@@ -302,6 +302,7 @@ export const sendMessageToCaseAI = mutation({
     caseId: v.id("cases"),
     content: v.string(),
   },
+
   handler: async (ctx, args) => {
     const userId = await getAuthenticatedUser(ctx);
 
@@ -321,16 +322,19 @@ export const sendMessageToCaseAI = mutation({
       timestamp,
     });
 
-    // 2. Call AI — here simplistic local call (Convex action)
-    const aiResponse = await ctx.runAction(internal.cases.generateAIReply, {
-      caseId: args.caseId,
-      userMessage: args.content,
-    });
+    // 2. Call AI (Convex action)
+    const aiResponse: string = await ctx.runAction(
+      internal.cases.generateAIReply,
+      {
+        caseId: args.caseId,
+        userMessage: args.content,
+      }
+    );
 
     // 3. Save AI message
     const aiMsgId = await ctx.db.insert("chatMessages", {
       content: aiResponse,
-      authorId: userId, // logically AI, but author is required; could use system user
+      authorId: userId,
       caseId: args.caseId,
       isAI: true,
       timestamp: Date.now(),
@@ -340,6 +344,7 @@ export const sendMessageToCaseAI = mutation({
   },
 });
 
+// Action
 export const generateAIReply = action({
   args: {
     caseId: v.id("cases"),
@@ -349,4 +354,3 @@ export const generateAIReply = action({
     return `AI received: "${args.userMessage}"`;
   },
 });
-
