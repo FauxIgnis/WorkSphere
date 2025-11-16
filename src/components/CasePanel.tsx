@@ -892,11 +892,8 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                                 <ExclamationTriangleIcon className="h-4 w-4" />
                                 Add at least one document to use the AI chat.
                               </div>
-                              <p className="mt-1 text-xs text-amber-700/80">
-                                Attach documents to this case so the assistant has context for your questions.
-                              </p>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
                     </aside>
