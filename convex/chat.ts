@@ -147,3 +147,39 @@ export const addReaction = mutation({
     return true;
   },
 });
+
+export const insertCaseUserMessage = internalMutation({
+  args: {
+    content: v.string(),
+    caseId: v.id("cases"),
+    authorId: v.id("users"),
+    timestamp: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return ctx.db.insert("chatMessages", {
+      content: args.content,
+      authorId: args.authorId,
+      caseId: args.caseId,
+      isAI: false,
+      timestamp: args.timestamp,
+    });
+  },
+});
+
+export const insertCaseAIMessage = internalMutation({
+  args: {
+    content: v.string(),
+    caseId: v.id("cases"),
+    authorId: v.id("users"),
+    timestamp: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return ctx.db.insert("chatMessages", {
+      content: args.content,
+      authorId: args.authorId,
+      caseId: args.caseId,
+      isAI: true,
+      timestamp: args.timestamp,
+    });
+  },
+});

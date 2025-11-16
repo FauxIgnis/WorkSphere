@@ -1,6 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
-import { action } from "convex/server";
+import { query, mutation, action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
@@ -256,10 +255,10 @@ export const sendMessageToCaseAI = action({
     content: v.string(),
   },
   handler: async (ctx, args) => {
-    const userId = await ctx.runQuery(internal.auth.getUserId, {});
-    if (!userId) throw new Error("Not authenticated");
+    const userId = await getAuthenticatedUser(ctx);
+    const internalApi = internal as any;
 
-    const caseDoc = await ctx.runQuery(internal.cases.getCase, {
+    const caseDoc = await ctx.runQuery(internalApi.cases.getCase, {
       caseId: args.caseId,
     });
 
@@ -269,7 +268,7 @@ export const sendMessageToCaseAI = action({
     const timestamp = Date.now();
 
     const userMsgId = await ctx.runMutation(
-      internal.chatMessages.insertUserMessage,
+      internalApi.chat.insertCaseUserMessage,
       {
         content: args.content,
         caseId: args.caseId,
@@ -278,13 +277,16 @@ export const sendMessageToCaseAI = action({
       }
     );
 
-    const aiResponse = await ctx.actions.internal.cases.generateAIReply({
-      caseId: args.caseId,
-      userMessage: args.content,
-    });
+    const aiResponse = await ctx.runAction(
+      internalApi.cases.generateAIReply,
+      {
+        caseId: args.caseId,
+        userMessage: args.content,
+      }
+    );
 
     const aiMsgId = await ctx.runMutation(
-      internal.chatMessages.insertAIMessage,
+      internalApi.chat.insertCaseAIMessage,
       {
         content: aiResponse,
         caseId: args.caseId,
