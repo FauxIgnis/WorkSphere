@@ -1,6 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
+import { query, mutation, action } from "convex/server";
 
 async function getAuthenticatedUser(ctx: any) {
   const userId = await getAuthUserId(ctx);
