@@ -76,6 +76,26 @@ export const getCase = query({
   },
 });
 
+    // Returns chat messages for a specific case
+    export const getCaseMessages = query({
+      args: { caseId: v.id("cases") },
+      handler: async (ctx, args) => {
+        const userId = await getAuthUserId(ctx);
+        if (!userId) return [];
+
+        const caseDoc = await ctx.db.get(args.caseId);
+        if (!caseDoc || caseDoc.createdBy !== userId) {
+          return [];
+        }
+
+        return await ctx.db
+          .query("chatMessages")
+          .withIndex("by_case", q => q.eq("caseId", args.caseId))
+          .order("asc")
+          .collect();
+      },
+    });
+
 export const getCaseDocuments = query({
   args: { caseId: v.id("cases") },
   handler: async (ctx, args) => {
@@ -83,27 +103,6 @@ export const getCaseDocuments = query({
     if (!userId) {
       return [];
     }
-
-    // Returns chat messages for a specific case
-export const getCaseMessages = query({
-  args: { caseId: v.id("cases") },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) return [];
-
-    const caseDoc = await ctx.db.get(args.caseId);
-    if (!caseDoc || caseDoc.createdBy !== userId) {
-      return [];
-    }
-
-    return await ctx.db
-      .query("chatMessages")
-      .withIndex("by_case", q => q.eq("caseId", args.caseId))
-      .order("asc")
-      .collect();
-  },
-});
-
 
     // Verify user has access to this case
     const caseDoc = await ctx.db.get(args.caseId);
