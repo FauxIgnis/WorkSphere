@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
@@ -20,6 +20,21 @@ interface CasePanelProps {
   onCaseSelect: (caseId: string | null) => void;
 }
 
+type MessageSource = {
+  documentId: string;
+  page?: number;
+  preview?: string;
+};
+
+type CaseChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  createdAt: number;
+  sources?: MessageSource[];
+  pending?: boolean;
+};
+
 export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newCaseName, setNewCaseName] = useState("");
@@ -28,6 +43,10 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [showAIChat, setShowAIChat] = useState(false);
+  const [messages, setMessages] = useState<CaseChatMessage[]>([]);
+  const [userMessage, setUserMessage] = useState("");
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const cases = useQuery(api.cases.getUserCases) || [];
   const selectedCase = useQuery(
@@ -38,6 +57,10 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
     api.cases.getCaseDocuments,
     selectedCaseId ? { caseId: selectedCaseId as Id<"cases"> } : "skip"
   ) || [];
+  const caseMessagesData = useQuery(
+    api.cases.getCaseMessages,
+    selectedCaseId ? { caseId: selectedCaseId as Id<"cases"> } : "skip"
+  );
   const userDocuments = useQuery(api.documents.listUserDocuments) || [];
 
   const createCase = useMutation(api.cases.createCase);
@@ -45,6 +68,42 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
   const deleteCase = useMutation(api.cases.deleteCase);
   const addDocumentToCase = useMutation(api.cases.addDocumentToCase);
   const removeDocumentFromCase = useMutation(api.cases.removeDocumentFromCase);
+  const sendMessageToCaseAI = useMutation(api.cases.sendMessageToCaseAI);
+
+  useEffect(() => {
+    if (!selectedCaseId) {
+      setMessages([]);
+      setUserMessage("");
+      return;
+    }
+  }, [selectedCaseId]);
+
+  useEffect(() => {
+    if (!caseMessagesData) return;
+
+    const normalizedMessages: CaseChatMessage[] = [...caseMessagesData]
+      .sort((a, b) => a.createdAt - b.createdAt)
+      .map((msg) => ({
+        id: String(msg._id ?? msg.id ?? msg.createdAt),
+        role: msg.role,
+        text: msg.text,
+        createdAt: msg.createdAt,
+        sources: msg.fragments || msg.sources || [],
+      }));
+
+    setMessages(normalizedMessages);
+  }, [caseMessagesData]);
+
+  useEffect(() => {
+    if (!showAIChat) return;
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, showAIChat]);
+
+  const scrollChatToBottom = () => {
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    });
+  };
 
   const handleCreateCase = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,10 +187,51 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
     }
   };
 
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!selectedCaseId) return;
+    const trimmedMessage = userMessage.trim();
+    if (!trimmedMessage) return;
+    if (caseDocuments.length === 0) return;
+
+    const tempMessage: CaseChatMessage = {
+      id: `temp-${Date.now()}`,
+      role: "user",
+      text: trimmedMessage,
+      createdAt: Date.now(),
+      sources: [],
+      pending: true,
+    };
+
+    setMessages((prev) => [...prev, tempMessage]);
+    setUserMessage("");
+    setIsSendingMessage(true);
+    scrollChatToBottom();
+
+    try {
+      await sendMessageToCaseAI({
+        caseId: selectedCaseId as Id<"cases">,
+        question: trimmedMessage,
+      });
+    } catch (error: any) {
+      setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));
+      toast.error(error?.message || "Failed to send message to Case AI");
+    } finally {
+      setIsSendingMessage(false);
+    }
+  };
+
   const availableDocuments = userDocuments.filter(
     (doc) =>
       doc && !doc.caseId && !caseDocuments.some((caseDoc) => caseDoc._id === doc._id)
   );
+
+  const canSendMessages = caseDocuments.length > 0;
+
+  const getDocumentTitle = (documentId: string) => {
+    const doc = caseDocuments.find((document) => String(document._id) === documentId);
+    return doc?.title || `Document ${documentId.slice(0, 6)}...`;
+  };
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 B";
@@ -364,7 +464,7 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
 
             <div className="flex-1 overflow-hidden rounded-3xl border border-neutral-200/70 bg-white shadow-sm">
               {selectedCase ? (
-                <div className={`flex h-full flex-col ${showAIChat ? "lg:grid lg:grid-cols-[1fr,320px]" : ""}`}>
+                <div className={`flex h-full flex-col ${showAIChat ? "lg:grid lg:grid-cols-[1fr,360px]" : ""}`}>
                   <div className="flex h-full flex-col">
                     <div className="border-b border-neutral-200/70 bg-[#f7f6f3]/60 px-6 py-5">
                       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -485,31 +585,111 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                   </div>
 
                   {showAIChat && (
-                    <div className="hidden border-t border-neutral-200/70 bg-[#f7f6f3]/60 px-6 py-6 lg:block lg:h-full lg:border-l lg:border-t-0">
-                      <div className="flex h-full flex-col gap-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <SparklesIcon className="h-5 w-5 text-indigo-500" />
-                            <h3 className="text-sm font-semibold text-neutral-900">Case AI Assistant</h3>
-                          </div>
-                          <button
-                            onClick={() => setShowAIChat(false)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
-                          >
-                            <XMarkIcon className="h-4 w-4" />
-                          </button>
+                    <div className="hidden h-full flex-col border-t border-neutral-200/70 bg-[#f7f6f3]/60 lg:flex lg:border-l lg:border-t-0">
+                      <div className="flex items-center justify-between border-b border-neutral-200/70 px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <SparklesIcon className="h-5 w-5 text-indigo-500" />
+                          <h3 className="text-sm font-semibold text-neutral-900">Case AI Assistant</h3>
                         </div>
-                        <p className="text-xs text-neutral-500">
-                          Ask questions about all {caseDocuments.length} documents inside this case. Summaries, comparisons, or cross-document analysis are just a prompt away.
-                        </p>
-                        <div className="flex-1 rounded-2xl border border-dashed border-neutral-200 bg-white/60 px-4 py-8 text-center">
-                          <SparklesIcon className="mx-auto h-10 w-10 text-indigo-400" />
-                          <h4 className="mt-4 text-sm font-semibold text-neutral-900">Case-wide AI Analysis</h4>
-                          <p className="mt-2 text-xs text-neutral-500">
-                            Launch the AI chat to explore arguments, highlight conflicts, or request summaries tailored to this case.
-                          </p>
+                        <button
+                          onClick={() => setShowAIChat(false)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+                        >
+                          <XMarkIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+
+                      <div className="flex h-full flex-col px-6 py-4">
+                        <div className="flex-1 space-y-4 overflow-y-auto pr-1">
+                          {messages.length === 0 && !isSendingMessage ? (
+                            <div className="mt-8 rounded-2xl border border-dashed border-neutral-200 bg-white/80 px-4 py-6 text-center text-xs text-neutral-500">
+                              Ask questions about all documents in this case to receive tailored insights.
+                            </div>
+                          ) : (
+                            messages
+                              .sort((a, b) => a.createdAt - b.createdAt)
+                              .map((message) => (
+                                <div
+                                  key={message.id}
+                                  className={`rounded-2xl border px-4 py-3 text-sm shadow-sm ${
+                                    message.role === "assistant"
+                                      ? "border-indigo-100 bg-white"
+                                      : "border-neutral-200 bg-white"
+                                  }`}
+                                >
+                                  <div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-400">
+                                    {message.role === "assistant" ? "Assistant" : "You"}
+                                  </div>
+                                  <p className="mt-2 whitespace-pre-line text-sm text-neutral-800">{message.text}</p>
+                                  {message.sources && message.sources.length > 0 && (
+                                    <div className="mt-3 rounded-xl bg-neutral-50 p-3">
+                                      <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-neutral-400">
+                                        Sources
+                                      </p>
+                                      <ul className="mt-2 space-y-2 text-xs text-neutral-600">
+                                        {message.sources.map((source, index) => (
+                                          <li
+                                            key={`${message.id}-source-${index}`}
+                                            className="rounded-lg border border-neutral-200 bg-white px-3 py-2"
+                                          >
+                                            <p className="font-medium text-neutral-800">{getDocumentTitle(source.documentId)}</p>
+                                            <p className="text-[11px] text-neutral-500">
+                                              Page {source.page ?? "-"}
+                                            </p>
+                                            {source.preview && (
+                                              <p className="mt-1 text-neutral-600">{source.preview}</p>
+                                            )}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
+                              ))
+                          )}
+
+                          {isSendingMessage && (
+                            <div className="flex items-center gap-2 rounded-2xl border border-dashed border-neutral-200 bg-white/80 px-3 py-2 text-xs text-neutral-500">
+                              <div className="h-2 w-2 animate-pulse rounded-full bg-indigo-500" />
+                              Waiting for AI response...
+                            </div>
+                          )}
+                          <div ref={messagesEndRef} />
+                        </div>
+
+                        <div className="mt-4 border-t border-neutral-200/70 pt-4">
+                          {canSendMessages ? (
+                            <form onSubmit={handleSendMessage} className="flex flex-col gap-3">
+                              <textarea
+                                value={userMessage}
+                                onChange={(e) => setUserMessage(e.target.value)}
+                                placeholder="Ask a question about this case..."
+                                rows={3}
+                                className="w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                                disabled={isSendingMessage}
+                              />
+                              <button
+                                type="submit"
+                                disabled={isSendingMessage || !userMessage.trim()}
+                                className="inline-flex items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300"
+                              >
+                                {isSendingMessage ? "Thinking..." : "Send"}
+                              </button>
+                            </form>
+                          ) : (
+                            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                              <div className="flex items-center gap-2 font-semibold">
+                                <ExclamationTriangleIcon className="h-4 w-4" />
+                                Add at least one document to use the AI chat.
+                              </div>
+                              <p className="mt-1 text-xs text-amber-700/80">
+                                Attach documents to this case so the assistant has context for your questions.
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
+
                     </div>
                   )}
                 </div>
