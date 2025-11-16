@@ -893,7 +893,6 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                                 Add at least one document to use the AI chat.
                               </div>
                             )}
-                        </div>
                     </aside>
                   )}
                 </div>
