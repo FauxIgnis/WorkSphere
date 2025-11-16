@@ -1,5 +1,9 @@
 import { v } from "convex/values";
 import { query, mutation, action } from "./_generated/server";
+import { internal } from "./_generated/api";
+import { getAuthUserId } from "@convex-dev/auth/server";
+
+/** -------------- AUTH HELPERS -------------- */
 
 async function getAuthenticatedUser(ctx: any) {
   const userId = await getAuthUserId(ctx);
@@ -9,6 +13,8 @@ async function getAuthenticatedUser(ctx: any) {
   return userId;
 }
 
+/** -------------- CASE CRUD -------------- */
+
 export const createCase = mutation({
   args: {
     name: v.string(),
@@ -16,7 +22,7 @@ export const createCase = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getAuthenticatedUser(ctx);
-    
+
     const caseId = await ctx.db.insert("cases", {
       name: args.name,
       description: args.description,
@@ -28,7 +34,6 @@ export const createCase = mutation({
       documentCount: 0,
     });
 
-    // Log audit event
     await ctx.db.insert("auditLogs", {
       caseId,
       userId,
@@ -45,9 +50,7 @@ export const getUserCases = query({
   args: {},
   handler: async (ctx) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      return [];
-    }
+    if (!userId) return [];
 
     return await ctx.db
       .query("cases")
@@ -62,52 +65,44 @@ export const getCase = query({
   args: { caseId: v.id("cases") },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      return null;
-    }
+    if (!userId) return null;
 
     const caseDoc = await ctx.db.get(args.caseId);
-    if (!caseDoc || caseDoc.createdBy !== userId) {
-      return null;
-    }
+    if (!caseDoc || caseDoc.createdBy !== userId) return null;
 
     return caseDoc;
   },
 });
 
-    // Returns chat messages for a specific case
-    export const getCaseMessages = query({
-      args: { caseId: v.id("cases") },
-      handler: async (ctx, args) => {
-        const userId = await getAuthUserId(ctx);
-        if (!userId) return [];
+/** -------------- CHAT MESSAGES -------------- */
 
-        const caseDoc = await ctx.db.get(args.caseId);
-        if (!caseDoc || caseDoc.createdBy !== userId) {
-          return [];
-        }
+export const getCaseMessages = query({
+  args: { caseId: v.id("cases") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
 
-        return await ctx.db
-          .query("chatMessages")
-          .withIndex("by_case", q => q.eq("caseId", args.caseId))
-          .order("asc")
-          .collect();
-      },
-    });
+    const caseDoc = await ctx.db.get(args.caseId);
+    if (!caseDoc || caseDoc.createdBy !== userId) return [];
+
+    return await ctx.db
+      .query("chatMessages")
+      .withIndex("by_case", (q) => q.eq("caseId", args.caseId))
+      .order("asc")
+      .collect();
+  },
+});
+
+/** -------------- DOCUMENTS -------------- */
 
 export const getCaseDocuments = query({
   args: { caseId: v.id("cases") },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      return [];
-    }
+    if (!userId) return [];
 
-    // Verify user has access to this case
     const caseDoc = await ctx.db.get(args.caseId);
-    if (!caseDoc || caseDoc.createdBy !== userId) {
-      return [];
-    }
+    if (!caseDoc || caseDoc.createdBy !== userId) return [];
 
     return await ctx.db
       .query("documents")
@@ -118,54 +113,39 @@ export const getCaseDocuments = query({
 });
 
 export const addDocumentToCase = mutation({
-  args: {
-    caseId: v.id("cases"),
-    documentId: v.id("documents"),
-  },
+  args: { caseId: v.id("cases"), documentId: v.id("documents") },
   handler: async (ctx, args) => {
     const userId = await getAuthenticatedUser(ctx);
-    
-    // Verify user owns the case
-    const caseDoc = await ctx.db.get(args.caseId);
-    if (!caseDoc || caseDoc.createdBy !== userId) {
-      throw new Error("Case not found or access denied");
-    }
 
-    // Check case limits (30 documents, 50MB)
-    if (caseDoc.documentCount >= 30) {
-      throw new Error("Case document limit reached (30 documents maximum)");
-    }
+    const caseDoc = await ctx.db.get(args.caseId);
+    if (!caseDoc || caseDoc.createdBy !== userId)
+      throw new Error("Case not found or access denied");
 
     const document = await ctx.db.get(args.documentId);
-    if (!document) {
-      throw new Error("Document not found");
-    }
+    if (!document) throw new Error("Document not found");
 
-    // Estimate document size (rough calculation)
     const documentSize = new TextEncoder().encode(document.content).length;
-    if (caseDoc.totalSize + documentSize > 50 * 1024 * 1024) { // 50MB
-      throw new Error("Case size limit reached (50MB maximum)");
-    }
 
-    // Add document to case
-    await ctx.db.patch(args.documentId, {
-      caseId: args.caseId,
-    });
+    if (caseDoc.documentCount >= 30)
+      throw new Error("Case document limit reached");
 
-    // Update case statistics
+    if (caseDoc.totalSize + documentSize > 50 * 1024 * 1024)
+      throw new Error("Case size limit reached");
+
+    await ctx.db.patch(args.documentId, { caseId: args.caseId });
+
     await ctx.db.patch(args.caseId, {
       documentCount: caseDoc.documentCount + 1,
       totalSize: caseDoc.totalSize + documentSize,
       lastModifiedAt: Date.now(),
     });
 
-    // Log audit event
     await ctx.db.insert("auditLogs", {
       caseId: args.caseId,
       documentId: args.documentId,
       userId,
       action: "add_document_to_case",
-      details: `Added document "${document.title}" to case`,
+      details: `Added document: ${document.title}`,
       timestamp: Date.now(),
     });
 
@@ -174,50 +154,42 @@ export const addDocumentToCase = mutation({
 });
 
 export const removeDocumentFromCase = mutation({
-  args: {
-    caseId: v.id("cases"),
-    documentId: v.id("documents"),
-  },
+  args: { caseId: v.id("cases"), documentId: v.id("documents") },
   handler: async (ctx, args) => {
     const userId = await getAuthenticatedUser(ctx);
-    
-    // Verify user owns the case
+
     const caseDoc = await ctx.db.get(args.caseId);
-    if (!caseDoc || caseDoc.createdBy !== userId) {
+    if (!caseDoc || caseDoc.createdBy !== userId)
       throw new Error("Case not found or access denied");
-    }
 
     const document = await ctx.db.get(args.documentId);
-    if (!document || document.caseId !== args.caseId) {
+    if (!document || document.caseId !== args.caseId)
       throw new Error("Document not found in this case");
-    }
 
-    // Remove document from case
-    await ctx.db.patch(args.documentId, {
-      caseId: undefined,
-    });
+    const size = new TextEncoder().encode(document.content).length;
 
-    // Update case statistics
-    const documentSize = new TextEncoder().encode(document.content).length;
+    await ctx.db.patch(args.documentId, { caseId: undefined });
+
     await ctx.db.patch(args.caseId, {
       documentCount: Math.max(0, caseDoc.documentCount - 1),
-      totalSize: Math.max(0, caseDoc.totalSize - documentSize),
+      totalSize: Math.max(0, caseDoc.totalSize - size),
       lastModifiedAt: Date.now(),
     });
 
-    // Log audit event
     await ctx.db.insert("auditLogs", {
       caseId: args.caseId,
       documentId: args.documentId,
       userId,
       action: "remove_document_from_case",
-      details: `Removed document "${document.title}" from case`,
+      details: `Removed document: ${document.title}`,
       timestamp: Date.now(),
     });
 
     return true;
   },
 });
+
+/** -------------- UPDATE / DELETE -------------- */
 
 export const updateCase = mutation({
   args: {
@@ -227,26 +199,17 @@ export const updateCase = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getAuthenticatedUser(ctx);
-    
+
     const caseDoc = await ctx.db.get(args.caseId);
-    if (!caseDoc || caseDoc.createdBy !== userId) {
+    if (!caseDoc || caseDoc.createdBy !== userId)
       throw new Error("Case not found or access denied");
-    }
 
-    const updates: any = {
-      lastModifiedAt: Date.now(),
-    };
+    const updates: any = { lastModifiedAt: Date.now() };
 
-    if (args.name !== undefined) {
-      updates.name = args.name;
-    }
-
-    if (args.description !== undefined) {
-      updates.description = args.description;
-    }
+    if (args.name !== undefined) updates.name = args.name;
+    if (args.description !== undefined) updates.description = args.description;
 
     await ctx.db.patch(args.caseId, updates);
-
     return true;
   },
 });
@@ -255,31 +218,25 @@ export const deleteCase = mutation({
   args: { caseId: v.id("cases") },
   handler: async (ctx, args) => {
     const userId = await getAuthenticatedUser(ctx);
-    
-    const caseDoc = await ctx.db.get(args.caseId);
-    if (!caseDoc || caseDoc.createdBy !== userId) {
-      throw new Error("Case not found or access denied");
-    }
 
-    // Remove case reference from all documents
+    const caseDoc = await ctx.db.get(args.caseId);
+    if (!caseDoc || caseDoc.createdBy !== userId)
+      throw new Error("Case not found or access denied");
+
     const documents = await ctx.db
       .query("documents")
       .withIndex("by_case", (q) => q.eq("caseId", args.caseId))
       .collect();
 
     for (const doc of documents) {
-      await ctx.db.patch(doc._id, {
-        caseId: undefined,
-      });
+      await ctx.db.patch(doc._id, { caseId: undefined });
     }
 
-    // Mark case as inactive instead of deleting
     await ctx.db.patch(args.caseId, {
       isActive: false,
       lastModifiedAt: Date.now(),
     });
 
-    // Log audit event
     await ctx.db.insert("auditLogs", {
       caseId: args.caseId,
       userId,
@@ -292,27 +249,22 @@ export const deleteCase = mutation({
   },
 });
 
-import { action } from "./_generated/server";
-import { internal } from "./_generated/api";
+/** -------------- AI MESSAGE -------------- */
 
-// Mutation: user sends a message to the AI inside a case
 export const sendMessageToCaseAI = mutation({
   args: {
     caseId: v.id("cases"),
     content: v.string(),
   },
-
   handler: async (ctx, args) => {
     const userId = await getAuthenticatedUser(ctx);
 
     const caseDoc = await ctx.db.get(args.caseId);
-    if (!caseDoc || caseDoc.createdBy !== userId) {
+    if (!caseDoc || caseDoc.createdBy !== userId)
       throw new Error("Case not found or access denied");
-    }
 
     const timestamp = Date.now();
 
-    // 1. Save user message
     const userMsgId = await ctx.db.insert("chatMessages", {
       content: args.content,
       authorId: userId,
@@ -321,13 +273,11 @@ export const sendMessageToCaseAI = mutation({
       timestamp,
     });
 
-   // 2. Call AI (Convex action)
-const aiResponse = await ctx.actions.internal.cases.generateAIReply({
-  caseId: args.caseId,
-  userMessage: args.content,
-});
+    const aiResponse = await ctx.actions.internal.cases.generateAIReply({
+      caseId: args.caseId,
+      userMessage: args.content,
+    });
 
-    // 3. Save AI message
     const aiMsgId = await ctx.db.insert("chatMessages", {
       content: aiResponse,
       authorId: userId,
@@ -340,7 +290,8 @@ const aiResponse = await ctx.actions.internal.cases.generateAIReply({
   },
 });
 
-// Action
+/** -------------- AI ACTION -------------- */
+
 export const generateAIReply = action({
   args: {
     caseId: v.id("cases"),
