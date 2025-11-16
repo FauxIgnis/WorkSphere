@@ -893,9 +893,9 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                                 Add at least one document to use the AI chat.
                               </div>
                             )}
-                              </div>   // closes inner .flex-col
-</div>   // closes sidebar container
-</aside> // closes <aside>
+                              </div>
+                      </div>
+                      </aside>
                               
               ) : (
                 <div className="flex h-full flex-col items-center justify-center px-6 py-12 text-center">
