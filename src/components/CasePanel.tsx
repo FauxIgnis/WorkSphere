@@ -895,7 +895,6 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                             )}
                           </div>
                         </div>
-                      </div>
                     </aside>
                   )}
                 </div>
