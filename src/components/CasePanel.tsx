@@ -766,7 +766,7 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                   </div>
 
                   {showAIChat && (
-                    <div className="hidden h-full flex-col border-t border-neutral-200/70 bg-[#f7f6f3]/60 lg:flex lg:border-l lg:border-t-0">
+                    <div className="hidden h-full min-h-0 flex-col border-t border-neutral-200/70 bg-[#f7f6f3]/60 lg:flex lg:border-l lg:border-t-0">
                       <div className="flex items-center justify-between border-b border-neutral-200/70 px-6 py-4">
                         <div className="flex items-center gap-2">
                           <SparklesIcon className="h-5 w-5 text-indigo-500" />
@@ -780,10 +780,10 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                         </button>
                       </div>
 
-                      <div className="flex h-full flex-col px-6 py-4">
+                      <div className="flex h-full min-h-0 flex-col overflow-hidden px-6 py-4">
                         <div
                           ref={chatMessagesContainerRef}
-                          className="flex-1 space-y-4 overflow-y-auto pr-1"
+                          className="flex-1 min-h-0 space-y-4 overflow-y-auto pr-1"
                         >
                           {messages.length === 0 && !isSendingMessage ? (
                             <div className="mt-8 rounded-2xl border border-dashed border-neutral-200 bg-white/80 px-4 py-6 text-center text-xs text-neutral-500">
