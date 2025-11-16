@@ -84,6 +84,27 @@ export const getCaseDocuments = query({
       return [];
     }
 
+    // Returns chat messages for a specific case
+export const getCaseMessages = query({
+  args: { caseId: v.id("cases") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+
+    const caseDoc = await ctx.db.get(args.caseId);
+    if (!caseDoc || caseDoc.createdBy !== userId) {
+      return [];
+    }
+
+    return await ctx.db
+      .query("chatMessages")
+      .withIndex("by_case", q => q.eq("caseId", args.caseId))
+      .order("asc")
+      .collect();
+  },
+});
+
+
     // Verify user has access to this case
     const caseDoc = await ctx.db.get(args.caseId);
     if (!caseDoc || caseDoc.createdBy !== userId) {
@@ -272,3 +293,61 @@ export const deleteCase = mutation({
     return true;
   },
 });
+
+import { action } from "./_generated/server";
+import { internal } from "./_generated/api";
+
+// Mutation: user sends a message to the AI inside a case
+export const sendMessageToCaseAI = mutation({
+  args: {
+    caseId: v.id("cases"),
+    content: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthenticatedUser(ctx);
+
+    const caseDoc = await ctx.db.get(args.caseId);
+    if (!caseDoc || caseDoc.createdBy !== userId) {
+      throw new Error("Case not found or access denied");
+    }
+
+    const timestamp = Date.now();
+
+    // 1. Save user message
+    const userMsgId = await ctx.db.insert("chatMessages", {
+      content: args.content,
+      authorId: userId,
+      caseId: args.caseId,
+      isAI: false,
+      timestamp,
+    });
+
+    // 2. Call AI — here simplistic local call (Convex action)
+    const aiResponse = await ctx.runAction(internal.cases.generateAIReply, {
+      caseId: args.caseId,
+      userMessage: args.content,
+    });
+
+    // 3. Save AI message
+    const aiMsgId = await ctx.db.insert("chatMessages", {
+      content: aiResponse,
+      authorId: userId, // logically AI, but author is required; could use system user
+      caseId: args.caseId,
+      isAI: true,
+      timestamp: Date.now(),
+    });
+
+    return { userMsgId, aiMsgId, aiResponse };
+  },
+});
+
+export const generateAIReply = action({
+  args: {
+    caseId: v.id("cases"),
+    userMessage: v.string(),
+  },
+  handler: async (_, args) => {
+    return `AI received: "${args.userMessage}"`;
+  },
+});
+
