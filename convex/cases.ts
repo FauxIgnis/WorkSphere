@@ -323,13 +323,11 @@ export const sendMessageToCaseAI = mutation({
     });
 
    // 2. Call AI (Convex action)
-const aiResponse: string = await ctx.runAction(
-  internal.cases.generateAIReply,
-  {
-    caseId: args.caseId,
-    userMessage: args.content,
-  }
-);
+const aiResponse = await ctx.actions.internal.cases.generateAIReply({
+  caseId: args.caseId,
+  userMessage: args.content,
+});
+
 
 
     // 3. Save AI message
