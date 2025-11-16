@@ -861,43 +861,45 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                           <div ref={messagesEndRef} />
                         </div>
 
-                        <div className="border-t border-neutral-200/80 bg-[#f7f6f3]/60 px-6 py-4">
-                          {canSendMessages ? (
-                            <form
-                              onSubmit={handleSendMessage}
-                              className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4"
-                            >
-                              <div className="flex-1">
-                                <textarea
-                                  value={userMessage}
-                                  onChange={(e) => setUserMessage(e.target.value)}
-                                  placeholder="Ask a question about this case..."
-                                  rows={3}
-                                  className="w-full resize-none rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm text-neutral-700 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
-                                  disabled={isSendingMessage}
-                                />
-                              </div>
+                   <div className="border-t border-neutral-200/80 bg-[#f7f6f3]/60 px-6 py-4">
+  {canSendMessages ? (
+    <form
+      onSubmit={handleSendMessage}
+      className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4"
+    >
+      <div className="flex-1">
+        <textarea
+          value={userMessage}
+          onChange={(e) => setUserMessage(e.target.value)}
+          placeholder="Ask a question about this case..."
+          rows={3}
+          className="w-full resize-none rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm text-neutral-700 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+          disabled={isSendingMessage}
+        />
+      </div>
 
-                              <button
-                                type="submit"
-                                disabled={isSendingMessage || !userMessage.trim()}
-                                className="inline-flex h-11 w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 md:w-32"
-                              >
-                                {isSendingMessage ? "Thinking..." : "Send"}
-                              </button>
-                            </form>
-                          ) : (
-                            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                              <div className="flex items-center gap-2 font-semibold">
-                                <ExclamationTriangleIcon className="h-4 w-4" />
-                                Add at least one document to use the AI chat.
-                              </div>
-                            )}
-                              </div>
-                      </div>
-                      </aside>
-                              
-              ) : (
+      <button
+        type="submit"
+        disabled={isSendingMessage || !userMessage.trim()}
+        className="inline-flex h-11 w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 md:w-32"
+      >
+        {isSendingMessage ? "Thinking..." : "Send"}
+      </button>
+    </form>
+  ) : (
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+      <div className="flex items-center gap-2 font-semibold">
+        <ExclamationTriangleIcon className="h-4 w-4" />
+        Add at least one document to use the AI chat.
+      </div>
+    </div>        {/* ← закрываем внешний див ветки else */}
+  )}
+</div>            {/* ← закрываем border-t контейнер */}
+</div>            {/* ← закрываем inner flex-колонку */}
+</aside>
+)}               {/* ← закрываем {showAIChat && (...) } */}
+</div>           {/* ← закрываем div с классом `flex h-full flex-col ...` */}
+) : (
                 <div className="flex h-full flex-col items-center justify-center px-6 py-12 text-center">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm">
                     <FolderIcon className="h-10 w-10 text-neutral-400" />
