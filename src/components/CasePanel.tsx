@@ -623,16 +623,7 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto bg-white px-6 py-6">
-        {/* тут оставляешь свой маппинг messages как есть */}
         {messages.length === 0 && !isSendingMessage ? (
-          {/* пустой стейт */}
-          ...
-        ) : (
-          {/* список сообщений */}
-          ...
-        )}
-
-        {isSendingMessage && (
           <div className="mt-4 flex items-center gap-2 rounded-2xl border border-dashed border-neutral-200 bg-white/80 px-3 py-2 text-xs text-neutral-500">
             <div className="h-2 w-2 animate-pulse rounded-full bg-indigo-500" />
             Waiting for AI response...
