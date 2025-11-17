@@ -546,335 +546,152 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                 )}
               </div>
             </div>
+<div className="flex-1 overflow-hidden rounded-3xl border border-neutral-200/70 bg-white shadow-sm">
+  {selectedCase ? (
+    <div
+      className={`flex h-full min-h-0 flex-col ${
+        showAIChat ? "lg:grid lg:grid-cols-[1fr,360px]" : ""
+      }`}
+    >
+      {/* Левая колонка с кейсом */}
+      <div className="flex h-full flex-col">
+        <div className="border-b border-neutral-200/70 bg-[#f7f6f3]/60 px-6 py-5">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h3 className="text-xl font-semibold text-neutral-900">
+                {selectedCase.name}
+              </h3>
+              {selectedCase.description && (
+                <p className="mt-2 text-sm text-neutral-500">
+                  {selectedCase.description}
+                </p>
+              )}
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
+                <span>{selectedCase.documentCount}/30 Documents</span>
+                <span>•</span>
+                <span>
+                  {formatFileSize(selectedCase.totalSize)}/50MB Used
+                </span>
+                {selectedCase.documentCount >= 30 && (
+                  <span className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-600">
+                    <ExclamationTriangleIcon className="h-4 w-4" />
+                    Limit Reached
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={() => setShowAIChat(!showAIChat)}
+              className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
+                showAIChat
+                  ? "border-indigo-400 bg-indigo-50 text-indigo-600"
+                  : "border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:text-neutral-700"
+              }`}
+            >
+              <SparklesIcon className="h-4 w-4" />
+              Case AI Chat
+            </button>
+          </div>
+        </div>
 
-                        <div className="flex-1 overflow-hidden rounded-3xl border border-neutral-200/70 bg-white shadow-sm">
-              {selectedCase ? (
-                <div
-                  className={`flex h-full min-h-0 flex-col ${
-                    showAIChat ? "lg:grid lg:grid-cols-[1fr,360px]" : ""
-                  }`}
-                >
-                  <div className="flex h-full flex-col">
-                    <div className="border-b border-neutral-200/70 bg-[#f7f6f3]/60 px-6 py-5">
-                      <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div>
-                          <h3 className="text-xl font-semibold text-neutral-900">
-                            {selectedCase.name}
-                          </h3>
-                          {selectedCase.description && (
-                            <p className="mt-2 text-sm text-neutral-500">
-                              {selectedCase.description}
-                            </p>
-                          )}
-                          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
-                            <span>{selectedCase.documentCount}/30 Documents</span>
-                            <span>•</span>
-                            <span>{formatFileSize(selectedCase.totalSize)}/50MB Used</span>
-                            {selectedCase.documentCount >= 30 && (
-                              <span className="inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.3em] text-amber-600">
-                                <ExclamationTriangleIcon className="h-4 w-4" />
-                                Limit Reached
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => setShowAIChat(!showAIChat)}
-                          className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition ${
-                            showAIChat
-                              ? "border-indigo-400 bg-indigo-50 text-indigo-600"
-                              : "border-neutral-200 text-neutral-500 hover:border-neutral-300 hover:text-neutral-700"
-                          }`}
-                        >
-                          <SparklesIcon className="h-4 w-4" />
-                          Case AI Chat
-                        </button>
-                      </div>
-                    </div>
-
-                 <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
-  <section>
-    <div className="mb-4 flex items-center justify-between">
-      <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400">
-        Documents in Case
-      </h4>
-      <span className="text-xs text-neutral-400">{caseDocuments.length} total</span>
-    </div>
-    {caseDocuments.length === 0 ? (
-      <div className="rounded-2xl border border-dashed border-neutral-200 bg-[#f7f6f3]/60 px-6 py-12 text-center">
-        <FolderIcon className="mx-auto h-10 w-10 text-neutral-400" />
-        <p className="mt-4 text-sm font-semibold text-neutral-900">
-          No documents in this case yet
-        </p>
-        <p className="mt-2 text-xs text-neutral-500">
-          Add documents from your library below to start collaborating.
-        </p>
+        {/* Основное содержимое кейса: документы, файлы и т.п. */}
+        {/* здесь оставь твой текущий код с секциями Documents / Add Documents / Case Files */}
+        {/* ... */}
       </div>
-    ) : (
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {caseDocuments.map((doc) => (
-          <div
-            key={doc._id}
-            className="rounded-2xl border border-neutral-200 bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-md"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex min-w-0 flex-1 items-start gap-2">
-                <DocumentTextIcon className="h-5 w-5 text-neutral-500" />
-                <div className="min-w-0">
-                  <h5 className="truncate text-sm font-semibold text-neutral-900">
-                    {doc.title}
-                  </h5>
-                  <p className="mt-1 text-xs text-neutral-400">
-                    Modified {new Date(doc.lastModifiedAt).toLocaleDateString()}
+
+      {/* Правая колонка с AI-чатом, рендерится только когда showAIChat === true */}
+      {showAIChat && (
+        <aside className="hidden h-full min-h-0 lg:flex">
+          <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-neutral-200/70 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-neutral-200/70 px-6 py-4">
+              <div className="flex items-center gap-2">
+                <SparklesIcon className="h-5 w-5 text-indigo-500" />
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-neutral-400">
+                    AI Assistant
                   </p>
+                  <h3 className="text-base font-semibold text-neutral-900">
+                    Case Intelligence
+                  </h3>
                 </div>
               </div>
               <button
-                onClick={() => handleRemoveDocument(doc._id)}
+                onClick={() => setShowAIChat(false)}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
-                title="Remove from case"
+                title="Close assistant"
               >
                 <XMarkIcon className="h-4 w-4" />
               </button>
             </div>
-          </div>
-        ))}
-      </div>
-    )}
-  </section>
 
-  {availableDocuments.length > 0 && (
-    <section>
-      <div className="mb-4 flex items-center justify-between">
-        <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400">
-          Add Documents to Case
-        </h4>
-        <span className="text-xs text-neutral-400">
-          {availableDocuments.length} available
-        </span>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {availableDocuments.map((doc) => {
-          if (!doc) return null;
-          return (
-            <div
-              key={doc._id}
-              className="rounded-2xl border border-neutral-200 bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-md"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex min-w-0 flex-1 items-start gap-2">
-                  <DocumentTextIcon className="h-5 w-5 text-neutral-500" />
-                  <div className="min-w-0">
-                    <h5 className="truncate text-sm font-semibold text-neutral-900">
-                      {doc.title}
-                    </h5>
-                    <p className="mt-1 text-xs text-neutral-400">
-                      Modified {new Date(doc.lastModifiedAt).toLocaleDateString()}
-                    </p>
+            <div className="flex-1 overflow-y-auto bg-white px-6 py-6">
+              {messages.length === 0 && !isSendingMessage && (
+                <div className="mt-4 flex items-center gap-2 rounded-2xl border border-dashed border-neutral-200 bg-white/80 px-3 py-2 text-xs text-neutral-500">
+                  <div className="h-2 w-2 animate-pulse rounded-full bg-indigo-500" />
+                  Waiting for AI response...
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div className="border-t border-neutral-200/80 bg-[#f7f6f3]/60 px-6 py-4">
+              {canSendMessages ? (
+                <form
+                  onSubmit={handleSendMessage}
+                  className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4"
+                >
+                  <div className="flex-1">
+                    <textarea
+                      value={userMessage}
+                      onChange={(e) => setUserMessage(e.target.value)}
+                      placeholder="Ask a question about this case..."
+                      rows={3}
+                      className="w-full resize-none rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm text-neutral-700 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                      disabled={isSendingMessage}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSendingMessage || !userMessage.trim()}
+                    className="inline-flex h-11 w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 md:w-32"
+                  >
+                    {isSendingMessage ? "Thinking..." : "Send"}
+                  </button>
+                </form>
+              ) : (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                  <div className="flex items-center gap-2 font-semibold">
+                    <ExclamationTriangleIcon className="h-4 w-4" />
+                    Add at least one document to use the AI chat.
                   </div>
                 </div>
-                <button
-                  onClick={() => handleAddDocument(doc._id)}
-                  disabled={selectedCase.documentCount >= 30}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:text-neutral-300"
-                  title="Add to case"
-                >
-                  <PlusIcon className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  )}
-
-  <section>
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400">
-          Case Files
-        </h4>
-        <p className="text-xs text-neutral-400">
-          Upload optional Word or PDF files for this case
-        </p>
-      </div>
-      <div className="flex items-center gap-2">
-        <input
-          ref={caseFileInputRef}
-          type="file"
-          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          className="hidden"
-          onChange={handleCaseFileChange}
-          disabled={isUploadingCaseFile}
-        />
-        <button
-          onClick={() => caseFileInputRef.current?.click()}
-          disabled={isUploadingCaseFile}
-          className="inline-flex items-center gap-2 rounded-full border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-900 disabled:cursor-not-allowed disabled:border-neutral-200"
-        >
-          <ArrowUpTrayIcon className="h-4 w-4" />
-          {isUploadingCaseFile ? "Uploading..." : "Upload"}
-        </button>
-      </div>
-    </div>
-
-    {caseFiles.length === 0 ? (
-      <div className="rounded-2xl border border-dashed border-neutral-200 bg-[#f7f6f3]/60 px-6 py-6 text-center">
-        <PaperClipIcon className="mx-auto h-8 w-8 text-neutral-400" />
-        <p className="mt-3 text-sm font-semibold text-neutral-900">
-          No files uploaded yet
-        </p>
-        <p className="mt-1 text-xs text-neutral-500">
-          Attach briefs, filings, or supporting records as needed.
-        </p>
-      </div>
-    ) : (
-      <div className="grid gap-4 sm:grid-cols-2">
-        {caseFiles.map((file) => (
-          <div
-            key={file._id}
-            className="rounded-2xl border border-neutral-200 bg-white px-4 py-4 shadow-sm"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex flex-1 items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-neutral-100">
-                  <PaperClipIcon className="h-5 w-5 text-neutral-500" />
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-neutral-900">
-                    {file.name}
-                  </p>
-                  <p className="mt-1 text-xs text-neutral-500">
-                    {formatFileSize(file.size)} •{" "}
-                    {file.type.includes("pdf") ? "PDF" : "Word"}
-                  </p>
-                  {file.uploader?.name && (
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-neutral-400">
-                      Uploaded by {file.uploader.name}
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <a
-                  href={file.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
-                  title="Download"
-                >
-                  <ArrowDownTrayIcon className="h-4 w-4" />
-                </a>
-                <button
-                  onClick={() => handleDeleteCaseFileClick(file._id, file.name)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
-                  title="Delete file"
-                >
-                  <TrashIcon className="h-4 w-4" />
-                </button>
-              </div>
+              )}
             </div>
           </div>
-        ))}
-      </div>
-    )}
-  </section>
-</div>
-
-                  {showAIChat && (
-  <aside className="hidden h-full min-h-0 lg:flex">
-    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-neutral-200/70 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-neutral-200/70 px-6 py-4">
-        <div className="flex items-center gap-2">
-          <SparklesIcon className="h-5 w-5 text-indigo-500" />
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.3em] text-neutral-400">
-              AI Assistant
-            </p>
-            <h3 className="text-base font-semibold text-neutral-900">
-              Case Intelligence
-            </h3>
-          </div>
-        </div>
-        <button
-          onClick={() => setShowAIChat(false)}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
-          title="Close assistant"
-        >
-          <XMarkIcon className="h-4 w-4" />
-        </button>
-      </div>
-     <div className="flex-1 overflow-y-auto bg-white px-6 py-6">
-  {messages.length === 0 && !isSendingMessage && (
-    <div className="mt-4 flex items-center gap-2 rounded-2xl border border-dashed border-neutral-200 bg-white/80 px-3 py-2 text-xs text-neutral-500">
-      <div className="h-2 w-2 animate-pulse rounded-full bg-indigo-500" />
-      Waiting for AI response...
-    </div>
-  )}
-  <div ref={messagesEndRef} />
-</div>
-
-      <div className="border-t border-neutral-200/80 bg-[#f7f6f3]/60 px-6 py-4">
-        {canSendMessages ? (
-          <form
-            onSubmit={handleSendMessage}
-            className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4"
-          >
-            <div className="flex-1">
-              <textarea
-                value={userMessage}
-                onChange={(e) => setUserMessage(e.target.value)}
-                placeholder="Ask a question about this case..."
-                rows={3}
-                className="w-full resize-none rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm text-neutral-700 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
-                disabled={isSendingMessage}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isSendingMessage || !userMessage.trim()}
-              className="inline-flex h-11 w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 md:w-32"
-            >
-              {isSendingMessage ? "Thinking..." : "Send"}
-            </button>
-          </form>
-        ) : (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-            <div className="flex items-center gap-2 font-semibold">
-              <ExclamationTriangleIcon className="h-4 w-4" />
-              Add at least one document to use the AI chat.
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-           </aside>
-        </div>
-      ) : (
-        <div className="flex h-full flex-col items-center justify-center px-6 py-12 text-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm">
-            <FolderIcon className="h-10 w-10 text-neutral-400" />
-          </div>
-          <h3 className="mt-6 text-lg font-semibold text-neutral-900">
-            No Case Selected
-          </h3>
-          <p className="mt-2 max-w-sm text-sm text-neutral-500">
-            Select a case from the sidebar or create a new one to start
-            organizing your legal materials.
-          </p>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="mt-6 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-800"
-          >
-            <PlusIcon className="h-4 w-4" />
-            Create a case
-          </button>
-        </div>
+        </aside>
       )}
     </div>
-  </div>
+  ) : (
+    <div className="flex h-full flex-col items-center justify-center px-6 py-12 text-center">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm">
+        <FolderIcon className="h-10 w-10 text-neutral-400" />
+      </div>
+      <h3 className="mt-6 text-lg font-semibold text-neutral-900">
+        No Case Selected
+      </h3>
+      <p className="mt-2 max-w-sm text-sm text-neutral-500">
+        Select a case from the sidebar or create a new one to start
+        organizing your legal materials.
+      </p>
+      <button
+        onClick={() => setShowCreateForm(true)}
+        className="mt-6 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-800"
+      >
+        <PlusIcon className="h-4 w-4" />
+        Create a case
+      </button>
+    </div>
+  )}
 </div>
-);
-}
+
+                        
