@@ -625,10 +625,10 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
       <div className="flex-1 overflow-y-auto bg-white px-6 py-6">
         {/* тут оставляешь свой маппинг messages как есть */}
         {messages.length === 0 && !isSendingMessage ? (
-          /* пустой стейт */
+          {/* пустой стейт */}
           ...
         ) : (
-          /* список сообщений */
+          {/* список сообщений */}
           ...
         )}
 
