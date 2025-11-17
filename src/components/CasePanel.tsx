@@ -694,3 +694,4 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
       )}
     </div>
   );
+}
