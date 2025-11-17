@@ -592,11 +592,195 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                       </div>
                     </div>
 
-                    {/* центральная часть с документами остаётся без изменений */}
-                    <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
-                      {/* ... ваш код секций Documents in Case, Add Documents, Case Files ... */}
-                    </div>
+                 <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+  <section>
+    <div className="mb-4 flex items-center justify-between">
+      <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400">
+        Documents in Case
+      </h4>
+      <span className="text-xs text-neutral-400">{caseDocuments.length} total</span>
+    </div>
+    {caseDocuments.length === 0 ? (
+      <div className="rounded-2xl border border-dashed border-neutral-200 bg-[#f7f6f3]/60 px-6 py-12 text-center">
+        <FolderIcon className="mx-auto h-10 w-10 text-neutral-400" />
+        <p className="mt-4 text-sm font-semibold text-neutral-900">
+          No documents in this case yet
+        </p>
+        <p className="mt-2 text-xs text-neutral-500">
+          Add documents from your library below to start collaborating.
+        </p>
+      </div>
+    ) : (
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {caseDocuments.map((doc) => (
+          <div
+            key={doc._id}
+            className="rounded-2xl border border-neutral-200 bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-md"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-1 items-start gap-2">
+                <DocumentTextIcon className="h-5 w-5 text-neutral-500" />
+                <div className="min-w-0">
+                  <h5 className="truncate text-sm font-semibold text-neutral-900">
+                    {doc.title}
+                  </h5>
+                  <p className="mt-1 text-xs text-neutral-400">
+                    Modified {new Date(doc.lastModifiedAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => handleRemoveDocument(doc._id)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+                title="Remove from case"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </section>
+
+  {availableDocuments.length > 0 && (
+    <section>
+      <div className="mb-4 flex items-center justify-between">
+        <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400">
+          Add Documents to Case
+        </h4>
+        <span className="text-xs text-neutral-400">
+          {availableDocuments.length} available
+        </span>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {availableDocuments.map((doc) => {
+          if (!doc) return null;
+          return (
+            <div
+              key={doc._id}
+              className="rounded-2xl border border-neutral-200 bg-white px-4 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-md"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 flex-1 items-start gap-2">
+                  <DocumentTextIcon className="h-5 w-5 text-neutral-500" />
+                  <div className="min-w-0">
+                    <h5 className="truncate text-sm font-semibold text-neutral-900">
+                      {doc.title}
+                    </h5>
+                    <p className="mt-1 text-xs text-neutral-400">
+                      Modified {new Date(doc.lastModifiedAt).toLocaleDateString()}
+                    </p>
                   </div>
+                </div>
+                <button
+                  onClick={() => handleAddDocument(doc._id)}
+                  disabled={selectedCase.documentCount >= 30}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700 disabled:cursor-not-allowed disabled:border-neutral-200 disabled:text-neutral-300"
+                  title="Add to case"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  )}
+
+  <section>
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400">
+          Case Files
+        </h4>
+        <p className="text-xs text-neutral-400">
+          Upload optional Word or PDF files for this case
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          ref={caseFileInputRef}
+          type="file"
+          accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          className="hidden"
+          onChange={handleCaseFileChange}
+          disabled={isUploadingCaseFile}
+        />
+        <button
+          onClick={() => caseFileInputRef.current?.click()}
+          disabled={isUploadingCaseFile}
+          className="inline-flex items-center gap-2 rounded-full border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-900 disabled:cursor-not-allowed disabled:border-neutral-200"
+        >
+          <ArrowUpTrayIcon className="h-4 w-4" />
+          {isUploadingCaseFile ? "Uploading..." : "Upload"}
+        </button>
+      </div>
+    </div>
+
+    {caseFiles.length === 0 ? (
+      <div className="rounded-2xl border border-dashed border-neutral-200 bg-[#f7f6f3]/60 px-6 py-6 text-center">
+        <PaperClipIcon className="mx-auto h-8 w-8 text-neutral-400" />
+        <p className="mt-3 text-sm font-semibold text-neutral-900">
+          No files uploaded yet
+        </p>
+        <p className="mt-1 text-xs text-neutral-500">
+          Attach briefs, filings, or supporting records as needed.
+        </p>
+      </div>
+    ) : (
+      <div className="grid gap-4 sm:grid-cols-2">
+        {caseFiles.map((file) => (
+          <div
+            key={file._id}
+            className="rounded-2xl border border-neutral-200 bg-white px-4 py-4 shadow-sm"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-1 items-start gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-neutral-100">
+                  <PaperClipIcon className="h-5 w-5 text-neutral-500" />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-neutral-900">
+                    {file.name}
+                  </p>
+                  <p className="mt-1 text-xs text-neutral-500">
+                    {formatFileSize(file.size)} •{" "}
+                    {file.type.includes("pdf") ? "PDF" : "Word"}
+                  </p>
+                  {file.uploader?.name && (
+                    <p className="text-[11px] uppercase tracking-[0.2em] text-neutral-400">
+                      Uploaded by {file.uploader.name}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={file.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+                  title="Download"
+                >
+                  <ArrowDownTrayIcon className="h-4 w-4" />
+                </a>
+                <button
+                  onClick={() => handleDeleteCaseFileClick(file._id, file.name)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+                  title="Delete file"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </section>
+</div>
 
                   {showAIChat && (
   <aside className="hidden h-full min-h-0 lg:flex">
