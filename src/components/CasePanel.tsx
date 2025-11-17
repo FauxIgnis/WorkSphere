@@ -632,7 +632,6 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                 </div>
               )}
               <div ref={messagesEndRef} />
-            </div>
 
             <div className="border-t border-neutral-200/80 bg-[#f7f6f3]/60 px-6 py-4">
               {canSendMessages ? (
