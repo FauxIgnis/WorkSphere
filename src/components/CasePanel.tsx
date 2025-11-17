@@ -613,32 +613,9 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                       </div>
                     </div>
 
-                   <div className="flex-1 overflow-y-auto p-6">
-
-  {/* Case Documents */}
-  <div className="mb-10">
-    <h4 className="text-sm font-semibold text-neutral-900 mb-3">
-      Documents in this Case
-    </h4>
-    ...
-  </div>
-
-  {/* Add Existing Documents */}
-  <div className="mb-10">
-    <h4 className="text-sm font-semibold text-neutral-900 mb-3">
-      Add Existing Documents
-    </h4>
-    ...
-  </div>
-
-  {/* Upload New File */}
-  <div>
-    <h4 className="text-sm font-semibold text-neutral-900 mb-3">
-      Upload New Document
-    </h4>
-    ...
-  </div>
-
+                <div className="flex-1 p-6 text-sm text-neutral-500">
+  {/* Placeholder для основного содержимого дела */}
+  Select or upload documents for this case to start working with AI.
 </div>
 
                   {/* Правая часть: AI-чат, только если showAIChat === true */}
