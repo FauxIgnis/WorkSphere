@@ -613,10 +613,12 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                       </div>
                     </div>
 
-                <div className="flex-1 p-6 text-sm text-neutral-500">
-  {/* Placeholder для основного содержимого дела */}
-  Select or upload documents for this case to start working with AI.
-</div>
+                    {/* Здесь можешь позже добавить блоки с документами / файлами конкретного дела */}
+                    <div className="flex-1 p-6 text-sm text-neutral-500">
+                      {/* Placeholder для основного содержимого дела */}
+                      Select or upload documents for this case to start working with AI.
+                    </div>
+                  </div>
 
                   {/* Правая часть: AI-чат, только если showAIChat === true */}
                   {showAIChat && (
