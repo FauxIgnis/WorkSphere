@@ -850,25 +850,31 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
         )}
       </div>
     </div>
-  </aside>
-)}
-                </div>
-                ) : (
-                <div className="flex h-full flex-col items-center justify-center px-6 py-12 text-center">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm">
-                    <FolderIcon className="h-10 w-10 text-neutral-400" />
-                  </div>
-                  <h3 className="mt-6 text-lg font-semibold text-neutral-900">No Case Selected</h3>
-                  <p className="mt-2 max-w-sm text-sm text-neutral-500">
-                    Select a case from the sidebar or create a new one to start organizing your legal materials.
-                  </p>
-                  <button
-                    onClick={() => setShowCreateForm(true)}
-                    className="mt-6 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-800"
-                  >
-                    <PlusIcon className="h-4 w-4" />
-                    Create a case
-                  </button>
-                </div>
-            );
-          }
+           </aside>
+        </div>
+      ) : (
+        <div className="flex h-full flex-col items-center justify-center px-6 py-12 text-center">
+          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm">
+            <FolderIcon className="h-10 w-10 text-neutral-400" />
+          </div>
+          <h3 className="mt-6 text-lg font-semibold text-neutral-900">
+            No Case Selected
+          </h3>
+          <p className="mt-2 max-w-sm text-sm text-neutral-500">
+            Select a case from the sidebar or create a new one to start
+            organizing your legal materials.
+          </p>
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="mt-6 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-800"
+          >
+            <PlusIcon className="h-4 w-4" />
+            Create a case
+          </button>
+        </div>
+      )}
+    </div>
+  </div>
+</div>
+);
+}
