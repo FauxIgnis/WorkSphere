@@ -870,11 +870,6 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                     Create a case
                   </button>
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+              )
+            );
+          }
