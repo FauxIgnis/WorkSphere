@@ -692,6 +692,3 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
       </button>
     </div>
   )}
-</div>
-
-                        
