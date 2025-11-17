@@ -685,13 +685,9 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
       </p>
       <button
         onClick={() => setShowCreateForm(true)}
-        className="mt-6 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-800"
-      >
+        className="mt-6 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-800">
         <PlusIcon className="h-4 w-4" />
         Create a case
       </button>
    </div>
-      )}
-    </div>
-  );
-}
+ )}
