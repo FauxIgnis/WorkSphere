@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -751,12 +752,8 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                     </aside>
                   )}
                 </div>
-              ) : (
+                ) : (
                 <div className="flex h-full flex-col items-center justify-center px-6 py-12 text-center">
-                  {/* ... блок "No Case Selected" как у вас сейчас ... */}
-                </div>
-              )}
-            </div>
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm">
                     <FolderIcon className="h-10 w-10 text-neutral-400" />
                   </div>
