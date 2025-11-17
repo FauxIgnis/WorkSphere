@@ -32,13 +32,15 @@
     "convex": "^1.24.2",
     "highlight.js": "^11.11.1",
     "lowlight": "^3.3.0",
-    "tippy.js": "^6.3.7",
+    "mammoth": "^1.11.0",
     "openai": "^6.8.1",
+    "pdf-parse": "^2.4.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.9.5",
     "sonner": "^2.0.3",
-    "tailwind-merge": "^3.1.0"
+    "tailwind-merge": "^3.1.0",
+    "tippy.js": "^6.3.7"
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",

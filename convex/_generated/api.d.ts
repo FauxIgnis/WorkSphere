@@ -15,6 +15,7 @@ import type * as cases from "../cases.js";
 import type * as chat from "../chat.js";
 import type * as comments from "../comments.js";
 import type * as documents from "../documents.js";
+import type * as fileExtraction from "../fileExtraction.js";
 import type * as files from "../files.js";
 import type * as http from "../http.js";
 import type * as notifications from "../notifications.js";
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   chat: typeof chat;
   comments: typeof comments;
   documents: typeof documents;
+  fileExtraction: typeof fileExtraction;
   files: typeof files;
   http: typeof http;
   notifications: typeof notifications;

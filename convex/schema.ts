@@ -269,6 +269,7 @@ const applicationTables = {
     documentId: v.optional(v.id("documents")),
     caseId: v.optional(v.id("cases")),
     uploadedAt: v.number(),
+    extractedText: v.optional(v.string()),
   })
     .index("by_uploader", ["uploadedBy"])
     .index("by_document", ["documentId"])

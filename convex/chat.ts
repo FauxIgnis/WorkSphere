@@ -53,6 +53,7 @@ export const getChatMessages = query({
       : await ctx.db
           .query("chatMessages")
           .withIndex("by_timestamp")
+          .filter((q) => q.eq(q.field("caseId"), undefined))
           .order("desc")
           .take(args.limit || 50);
 

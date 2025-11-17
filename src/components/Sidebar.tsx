@@ -2,11 +2,10 @@ import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
-import { 
-  ChevronLeftIcon, 
+import {
+  ChevronLeftIcon,
   ChevronRightIcon,
   DocumentTextIcon,
-  ChatBubbleLeftRightIcon,
   CheckCircleIcon,
   CalendarIcon,
   ClipboardDocumentListIcon,
@@ -16,7 +15,7 @@ import {
   ShareIcon,
   LockClosedIcon,
   GlobeAltIcon,
-  BellIcon
+  BellIcon,
 } from "@heroicons/react/24/outline";
 import { NotificationCenter } from "./NotificationCenter";
 import { SubscriptionModal } from "./SubscriptionModal";
@@ -24,8 +23,8 @@ import { SubscriptionModal } from "./SubscriptionModal";
 interface SidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
-  activeView: 'editor' | 'chat' | 'tasks' | 'calendar' | 'audit' | 'cases';
-  onViewChange: (view: 'editor' | 'chat' | 'tasks' | 'calendar' | 'audit' | 'cases') => void;
+  activeView: "editor" | "tasks" | "calendar" | "audit" | "cases";
+  onViewChange: (view: "editor" | "tasks" | "calendar" | "audit" | "cases") => void;
   selectedDocumentId: string | null;
   onDocumentSelect: (documentId: string | null) => void;
   selectedCaseId: string | null;
@@ -96,12 +95,11 @@ export function Sidebar({
   const displayedDocuments = searchQuery.length > 2 ? searchResults : documents;
 
   const navigationItems = [
-    { id: 'editor', label: 'Editor', icon: DocumentTextIcon },
-    { id: 'cases', label: 'Cases', icon: FolderIcon },
-    { id: 'chat', label: 'Chat', icon: ChatBubbleLeftRightIcon },
-    { id: 'tasks', label: 'Tasks', icon: CheckCircleIcon },
-    { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
-    { id: 'audit', label: 'Audit Log', icon: ClipboardDocumentListIcon },
+    { id: "editor", label: "Editor", icon: DocumentTextIcon },
+    { id: "cases", label: "Cases", icon: FolderIcon },
+    { id: "tasks", label: "Tasks", icon: CheckCircleIcon },
+    { id: "calendar", label: "Calendar", icon: CalendarIcon },
+    { id: "audit", label: "Audit Log", icon: ClipboardDocumentListIcon },
   ] as const;
 
   if (collapsed) {

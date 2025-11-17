@@ -11,6 +11,12 @@ async function getAuthenticatedUser(ctx: any) {
   return userId;
 }
 
+type CaseAISource = {
+  title: string;
+  content: string;
+  sourceType: "document" | "attachment";
+};
+
 /** -------------- CASE CRUD -------------- */
 
 export const createCase = mutation({
@@ -309,20 +315,58 @@ export const generateAIReply = action({
   handler: async (ctx, args) => {
     const internalApi = internal as any;
 
-    const [caseDoc, caseDocuments] = await Promise.all([
+    const [caseDoc, caseDocuments, caseFiles] = await Promise.all([
       ctx.runQuery(internalApi.cases.getCase, { caseId: args.caseId }),
       ctx.runQuery(internalApi.cases.getCaseDocuments, { caseId: args.caseId }),
+      ctx.runQuery(internalApi.files.getCaseFilesForAI, { caseId: args.caseId }),
     ]);
 
     if (!caseDoc)
       throw new Error("Case not found or access denied");
 
-    const documents = (caseDocuments || [])
-      .filter((doc: any) => typeof doc.content === "string" && doc.content.trim().length)
-      .sort((a: any, b: any) => (b.lastModifiedAt ?? 0) - (a.lastModifiedAt ?? 0));
+    const documentSources: CaseAISource[] = (caseDocuments || [])
+      .filter(
+        (doc: any) => typeof doc.content === "string" && doc.content.trim().length
+      )
+      .sort((a: any, b: any) => (b.lastModifiedAt ?? 0) - (a.lastModifiedAt ?? 0))
+      .map((doc: any) => ({
+        title: doc.title,
+        content: doc.content,
+        sourceType: "document" as const,
+      }));
 
-    if (documents.length === 0) {
-      return "I can help once there are documents with readable text in this case. Please add or update case documents and ask again.";
+    const attachmentSources: CaseAISource[] = [];
+    if (Array.isArray(caseFiles)) {
+      for (const file of caseFiles) {
+        let text = typeof file.extractedText === "string" ? file.extractedText : "";
+        if (!text.trim()) {
+          try {
+            text =
+              (await ctx.runAction(internalApi.fileExtraction.ensureExtractedText, {
+                fileId: file._id,
+              })) || "";
+          } catch (error) {
+            console.error("Failed to extract attachment text", {
+              fileId: file._id,
+              error,
+            });
+          }
+        }
+
+        if (text.trim()) {
+          attachmentSources.push({
+            title: file.name,
+            content: text,
+            sourceType: "attachment",
+          });
+        }
+      }
+    }
+
+    const sources: CaseAISource[] = [...documentSources, ...attachmentSources];
+
+    if (sources.length === 0) {
+      return "I can help once there are documents or attachments with readable text in this case. Please add or update materials and ask again.";
     }
 
     const MAX_CONTEXT_CHARS = 12000;
@@ -330,11 +374,15 @@ export const generateAIReply = action({
     const contextSections: string[] = [];
     let currentLength = 0;
 
-    for (const doc of documents) {
-      const snippet = doc.content.slice(0, PER_DOCUMENT_LIMIT).trim();
+    for (const source of sources) {
+      const snippet = source.content.slice(0, PER_DOCUMENT_LIMIT).trim();
       if (!snippet) continue;
 
-      const section = `Title: ${doc.title}\nContent:\n${snippet}`;
+      const sectionHeader =
+        source.sourceType === "attachment"
+          ? `Attachment: ${source.title}`
+          : `Document: ${source.title}`;
+      const section = `${sectionHeader}\nContent:\n${snippet}`;
       if (currentLength + section.length > MAX_CONTEXT_CHARS && contextSections.length > 0) {
         break;
       }
@@ -357,7 +405,11 @@ export const generateAIReply = action({
 
     const systemPrompt = `You are Case AI, a legal analyst who strictly relies on the provided case documents.\n- Always ground your answers in the supplied context.\n- Reference the relevant document titles in parentheses when you cite supporting material.\n- If the documents don't contain the answer, explain what is missing instead of guessing.`;
 
-    const userPrompt = `Case: ${caseDoc.name}${caseDoc.description ? `\nDescription: ${caseDoc.description}` : ""}\n\nContext from case documents:\n${contextBlock}\n\nUser question:\n${args.userMessage}\n\nWrite a concise, well-structured answer in the user's language.`;
+    const userPrompt = `Case: ${caseDoc.name}${
+      caseDoc.description ? `\nDescription: ${caseDoc.description}` : ""
+    }\n\nContext from case documents and attachments:\n${contextBlock}\n\nUser question:\n${
+      args.userMessage
+    }\n\nWrite a concise, well-structured answer in the user's language.`;
 
     const apiKey = process.env.CONVEX_OPENAI_API_KEY;
     if (!apiKey) {

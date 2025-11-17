@@ -6,7 +6,6 @@ import { SignInForm } from "./SignInForm";
 import { SignOutButton } from "./SignOutButton";
 import { Sidebar } from "./components/Sidebar";
 import { DocumentEditor } from "./components/DocumentEditor";
-import { ChatPanel } from "./components/ChatPanel";
 import { TaskPanel } from "./components/TaskPanel";
 import { CalendarPanel } from "./components/CalendarPanel";
 import { AuditPanel } from "./components/AuditPanel";
@@ -14,7 +13,7 @@ import { CasePanel } from "./components/CasePanel";
 import { SharedDocument } from "./SharedDocument";
 import { Toaster } from "sonner";
 
-type WorkspaceView = 'editor' | 'chat' | 'tasks' | 'calendar' | 'audit' | 'cases';
+type WorkspaceView = 'editor' | 'tasks' | 'calendar' | 'audit' | 'cases';
 
 function MainApp() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -27,7 +26,6 @@ function MainApp() {
   const viewLabels: Record<WorkspaceView, string> = {
     editor: 'Documents',
     cases: 'Cases',
-    chat: 'Discussions',
     tasks: 'Tasks',
     calendar: 'Calendar',
     audit: 'Audit Log',
@@ -50,8 +48,6 @@ function MainApp() {
             onCaseSelect={setSelectedCaseId}
           />
         );
-      case 'chat':
-        return <ChatPanel documentId={selectedDocumentId} />;
       case 'tasks':
         return <TaskPanel documentId={selectedDocumentId} />;
       case 'calendar':

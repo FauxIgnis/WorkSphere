@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalQuery, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 async function getAuthenticatedUser(ctx: any) {
@@ -90,10 +90,12 @@ export const getDocumentFiles = query({
       files.map(async (file) => {
         const url = await ctx.storage.getUrl(file.storageId);
         const uploader = await ctx.db.get(file.uploadedBy);
+        const { extractedText, ...fileWithoutText } = file;
         return {
-          ...file,
+          ...fileWithoutText,
           url,
           uploader: uploader ? { name: uploader.name, email: uploader.email } : null,
+          hasExtractedText: Boolean(extractedText),
         };
       })
     );
@@ -125,10 +127,12 @@ export const getCaseFiles = query({
       files.map(async (file) => {
         const url = await ctx.storage.getUrl(file.storageId);
         const uploader = await ctx.db.get(file.uploadedBy);
+        const { extractedText, ...fileWithoutText } = file;
         return {
-          ...file,
+          ...fileWithoutText,
           url,
           uploader: uploader ? { name: uploader.name, email: uploader.email } : null,
+          hasExtractedText: Boolean(extractedText),
         };
       })
     );
@@ -156,5 +160,41 @@ export const deleteFile = mutation({
     await ctx.db.delete(args.fileId);
     
     return true;
+  },
+});
+
+export const getCaseFilesForAI = internalQuery({
+  args: { caseId: v.id("cases") },
+  handler: async (ctx, args) => {
+    const files = await ctx.db
+      .query("files")
+      .withIndex("by_case", (q) => q.eq("caseId", args.caseId))
+      .collect();
+
+    return files.map((file) => ({
+      _id: file._id,
+      name: file.name,
+      extractedText: file.extractedText,
+      uploadedAt: file.uploadedAt,
+      size: file.size,
+      type: file.type,
+    }));
+  },
+});
+
+export const getFileRecordForInternal = internalQuery({
+  args: { fileId: v.id("files") },
+  handler: async (ctx, args) => {
+    return ctx.db.get(args.fileId);
+  },
+});
+
+export const setExtractedText = internalMutation({
+  args: {
+    fileId: v.id("files"),
+    extractedText: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.fileId, { extractedText: args.extractedText });
   },
 });
