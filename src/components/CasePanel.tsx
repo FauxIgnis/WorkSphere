@@ -690,5 +690,7 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
         <PlusIcon className="h-4 w-4" />
         Create a case
       </button>
+   </div>
+      )}
     </div>
-  )}
+  );
