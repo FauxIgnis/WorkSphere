@@ -1,5 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
+import type { FormEvent, RefObject } from "react";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
@@ -108,10 +109,19 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
     setMessages(normalizedMessages);
   }, [caseMessagesData]);
 
+  const lastMessageKey = messages.length
+    ? `${messages[messages.length - 1].id}-${messages[messages.length - 1].pending ?? false}`
+    : "none";
+
   useEffect(() => {
     if (!showAIChat) return;
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, showAIChat]);
+    if (!messagesEndRef.current) return;
+    messagesEndRef.current.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+      inline: "nearest",
+    });
+  }, [lastMessageKey, showAIChat]);
 
   const handleCreateCase = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -328,92 +338,6 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
-
-  const ChatPanelContent = () => (
-    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-white">
-      <div className="flex-1 overflow-y-auto bg-white px-6 py-6">
-        {messages.length === 0 && !isSendingMessage ? (
-          <div className="mt-4 flex items-center gap-2 rounded-2xl border border-dashed border-neutral-200 bg-white/80 px-3 py-2 text-xs text-neutral-500">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-indigo-500" />
-            Waiting for AI response...
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {messages.map((msg) => {
-              const isAssistant = msg.role === "assistant";
-              const metaTextClass = isAssistant
-                ? "text-neutral-400"
-                : "text-white/70";
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex ${isAssistant ? "justify-start" : "justify-end"}`}
-                >
-                  <div
-                    className={`w-full rounded-3xl border px-4 py-3 text-sm shadow-sm ${
-                      isAssistant
-                        ? "border-neutral-200 bg-white text-neutral-800"
-                        : "border-neutral-900 bg-neutral-900 text-white"
-                    }`}
-                  >
-                    <p className={`text-[11px] font-semibold uppercase tracking-[0.3em] ${metaTextClass}`}>
-                      {isAssistant ? "Legal AI Assistant" : "You"}
-                    </p>
-                    <p className="mt-2 whitespace-pre-wrap">{msg.text}</p>
-                    {msg.pending && (
-                      <p className={`mt-2 text-[11px] uppercase tracking-[0.3em] ${metaTextClass}`}>
-                        Processing...
-                      </p>
-                    )}
-                    {msg.createdAt && (
-                      <p className={`mt-2 text-[11px] uppercase tracking-[0.3em] ${metaTextClass}`}>
-                        {new Date(msg.createdAt).toLocaleTimeString()}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      <div className="border-t border-neutral-200/80 bg-[#f7f6f3]/60 px-6 py-4">
-        {canSendMessages ? (
-          <form
-            onSubmit={handleSendMessage}
-            className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4"
-          >
-            <div className="flex-1">
-              <textarea
-                value={userMessage}
-                onChange={(e) => setUserMessage(e.target.value)}
-                placeholder="Ask a question about this case..."
-                rows={3}
-                className="w-full resize-none rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm text-neutral-700 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
-                disabled={isSendingMessage}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isSendingMessage || !userMessage.trim()}
-              className="inline-flex h-11 w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 md:w-32"
-            >
-              {isSendingMessage ? "Thinking..." : "Send"}
-            </button>
-          </form>
-        ) : (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-            <div className="flex items-center gap-2 font-semibold">
-              <ExclamationTriangleIcon className="h-4 w-4" />
-              Add at least one document or attachment to use the AI chat.
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
 
   const getDocumentPreview = (content?: string) => {
     if (!content) return "";
@@ -922,7 +846,15 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                             <XMarkIcon className="h-4 w-4" />
                           </button>
                         </div>
-                        <ChatPanelContent />
+                        <ChatPanelContent
+                          messages={messages}
+                          isSendingMessage={isSendingMessage}
+                          userMessage={userMessage}
+                          setUserMessage={setUserMessage}
+                          handleSendMessage={handleSendMessage}
+                          canSendMessages={canSendMessages}
+                          messagesEndRef={messagesEndRef}
+                        />
                       </div>
                     </div>
                   )}
@@ -951,6 +883,118 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+type ChatPanelContentProps = {
+  messages: CaseChatMessage[];
+  isSendingMessage: boolean;
+  userMessage: string;
+ setUserMessage: (value: string) => void;
+  handleSendMessage: (e: FormEvent) => void;
+  canSendMessages: boolean;
+  messagesEndRef: RefObject<HTMLDivElement>;
+};
+
+function ChatPanelContent({
+  messages,
+  isSendingMessage,
+  userMessage,
+  setUserMessage,
+  handleSendMessage,
+  canSendMessages,
+  messagesEndRef,
+}: ChatPanelContentProps) {
+  return (
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-white">
+      <div className="flex-1 overflow-y-auto bg-white px-6 py-6">
+        {messages.length === 0 && !isSendingMessage ? (
+          <div className="mt-4 flex items-center gap-2 rounded-2xl border border-dashed border-neutral-200 bg-white/80 px-3 py-2 text-xs text-neutral-500">
+            <div className="h-2 w-2 animate-pulse rounded-full bg-indigo-500" />
+            Waiting for AI response...
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {messages.map((msg) => {
+              const isAssistant = msg.role === "assistant";
+              const metaTextClass = isAssistant
+                ? "text-neutral-400"
+                : "text-white/70";
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex ${isAssistant ? "justify-start" : "justify-end"}`}
+                >
+                  <div
+                    className={`w-full rounded-3xl border px-4 py-3 text-sm shadow-sm ${
+                      isAssistant
+                        ? "border-neutral-200 bg-white text-neutral-800"
+                        : "border-neutral-900 bg-neutral-900 text-white"
+                    }`}
+                  >
+                    <p
+                      className={`text-[11px] font-semibold uppercase tracking-[0.3em] ${metaTextClass}`}
+                    >
+                      {isAssistant ? "Legal AI Assistant" : "You"}
+                    </p>
+                    <p className="mt-2 whitespace-pre-wrap">{msg.text}</p>
+                    {msg.pending && (
+                      <p
+                        className={`mt-2 text-[11px] uppercase tracking-[0.3em] ${metaTextClass}`}
+                      >
+                        Processing...
+                      </p>
+                    )}
+                    {msg.createdAt && (
+                      <p
+                        className={`mt-2 text-[11px] uppercase tracking-[0.3em] ${metaTextClass}`}
+                      >
+                        {new Date(msg.createdAt).toLocaleTimeString()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <div className="border-t border-neutral-200/80 bg-[#f7f6f3]/60 px-6 py-4">
+        {canSendMessages ? (
+          <form
+            onSubmit={handleSendMessage}
+            className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4"
+          >
+            <div className="flex-1">
+              <textarea
+                value={userMessage}
+                onChange={(e) => setUserMessage(e.target.value)}
+                placeholder="Ask a question about this case..."
+                rows={3}
+                className="w-full resize-none rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm text-neutral-700 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                disabled={isSendingMessage}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={isSendingMessage || !userMessage.trim()}
+              className="inline-flex h-11 w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 md:w-32"
+            >
+              {isSendingMessage ? "Thinking..." : "Send"}
+            </button>
+          </form>
+        ) : (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            <div className="flex items-center gap-2 font-semibold">
+              <ExclamationTriangleIcon className="h-4 w-4" />
+              Add at least one document or attachment to use the AI chat.
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
