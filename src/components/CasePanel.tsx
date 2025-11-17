@@ -599,158 +599,85 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                   </div>
 
                   {showAIChat && (
-                    <aside className="hidden h-full min-h-0 flex-1 lg:flex">
-                      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-neutral-200/70 bg-white shadow-sm">
-                        <div className="flex items-center justify-between border-b border-neutral-200/70 px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <SparklesIcon className="h-5 w-5 text-indigo-500" />
-                            <div>
-                              <p className="text-[11px] uppercase tracking-[0.3em] text-neutral-400">
-                                AI Assistant
-                              </p>
-                              <h3 className="text-base font-semibold text-neutral-900">
-                                Case Intelligence
-                              </h3>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => setShowAIChat(false)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
-                            title="Close assistant"
-                          >
-                            <XMarkIcon className="h-4 w-4" />
-                          </button>
-                        </div>
+  <aside className="hidden h-full min-h-0 lg:flex">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-3xl border border-neutral-200/70 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-neutral-200/70 px-6 py-4">
+        <div className="flex items-center gap-2">
+          <SparklesIcon className="h-5 w-5 text-indigo-500" />
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.3em] text-neutral-400">
+              AI Assistant
+            </p>
+            <h3 className="text-base font-semibold text-neutral-900">
+              Case Intelligence
+            </h3>
+          </div>
+        </div>
+        <button
+          onClick={() => setShowAIChat(false)}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-700"
+          title="Close assistant"
+        >
+          <XMarkIcon className="h-4 w-4" />
+        </button>
+      </div>
 
-                        <div className="flex-1 overflow-y-auto bg-white px-6 py-6">
-                          {messages.length === 0 && !isSendingMessage ? (
-                            <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-[#f7f6f3]/60 px-6 py-12 text-center">
-                              <SparklesIcon className="h-8 w-8 text-indigo-500" />
-                              <h3 className="mt-4 text-base font-semibold text-neutral-900">
-                                Ask about this case
-                              </h3>
-                              <p className="mt-2 text-sm text-neutral-500">
-                                Reference the documents you have attached to receive grounded answers and citations.
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="space-y-4">
-                              {messages
-                                .sort((a, b) => a.createdAt - b.createdAt)
-                                .map((message) => (
-                                  <div
-                                    key={message.id}
-                                    className="group flex max-w-3xl items-start gap-3"
-                                  >
-                                    <div
-                                      className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white ${
-                                        message.role === "assistant"
-                                          ? "bg-neutral-900"
-                                          : "bg-neutral-700"
-                                      }`}
-                                    >
-                                      {message.role === "assistant" ? "🤖" : "You"}
-                                    </div>
-                                    <div className="flex-1">
-                                      <div className="mb-1 flex items-center gap-2">
-                                        <span className="text-sm font-medium text-neutral-900">
-                                          {message.role === "assistant" ? "Case AI" : "You"}
-                                        </span>
-                                        <span className="text-xs text-neutral-400">
-                                          {new Date(message.createdAt).toLocaleTimeString()}
-                                        </span>
-                                      </div>
-                                      <div
-                                        className={`rounded-2xl border px-4 py-3 text-sm text-neutral-700 ${
-                                          message.role === "assistant"
-                                            ? "border-indigo-100 bg-gradient-to-r from-indigo-50 via-blue-50 to-white"
-                                            : "border-neutral-200 bg-neutral-50"
-                                        }`}
-                                      >
-                                        <p className="whitespace-pre-wrap break-words leading-relaxed">
-                                          {message.text}
-                                        </p>
-                                        {message.sources && message.sources.length > 0 && (
-                                          <div className="mt-3 rounded-xl border border-white/60 bg-white/70 p-3 text-xs text-neutral-600">
-                                            <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-neutral-400">
-                                              Sources
-                                            </p>
-                                            <ul className="mt-2 space-y-2">
-                                              {message.sources.map((source, index) => (
-                                                <li
-                                                  key={`${message.id}-source-${index}`}
-                                                  className="rounded-lg border border-neutral-200 bg-white px-3 py-2"
-                                                >
-                                                  <p className="font-medium text-neutral-800">
-                                                    {getDocumentTitle(source.documentId)}
-                                                  </p>
-                                                  <p className="text-[11px] text-neutral-500">
-                                                    Page {source.page ?? "-"}
-                                                  </p>
-                                                  {source.preview && (
-                                                    <p className="mt-1 text-neutral-600">
-                                                      {source.preview}
-                                                    </p>
-                                                  )}
-                                                </li>
-                                              ))}
-                                            </ul>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-                          )}
+      <div className="flex-1 overflow-y-auto bg-white px-6 py-6">
+        {/* тут оставляешь свой маппинг messages как есть */}
+        {messages.length === 0 && !isSendingMessage ? (
+          /* пустой стейт */
+          ...
+        ) : (
+          /* список сообщений */
+          ...
+        )}
 
-                          {isSendingMessage && (
-                            <div className="mt-4 flex items-center gap-2 rounded-2xl border border-dashed border-neutral-200 bg-white/80 px-3 py-2 text-xs text-neutral-500">
-                              <div className="h-2 w-2 animate-pulse rounded-full bg-indigo-500" />
-                              Waiting for AI response...
-                            </div>
-                          )}
+        {isSendingMessage && (
+          <div className="mt-4 flex items-center gap-2 rounded-2xl border border-dashed border-neutral-200 bg-white/80 px-3 py-2 text-xs text-neutral-500">
+            <div className="h-2 w-2 animate-pulse rounded-full bg-indigo-500" />
+            Waiting for AI response...
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
 
-                          <div ref={messagesEndRef} />
-                        </div>
+      <div className="border-t border-neutral-200/80 bg-[#f7f6f3]/60 px-6 py-4">
+        {canSendMessages ? (
+          <form
+            onSubmit={handleSendMessage}
+            className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4"
+          >
+            <div className="flex-1">
+              <textarea
+                value={userMessage}
+                onChange={(e) => setUserMessage(e.target.value)}
+                placeholder="Ask a question about this case..."
+                rows={3}
+                className="w-full resize-none rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm text-neutral-700 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                disabled={isSendingMessage}
+              />
+            </div>
 
-                        <div className="border-t border-neutral-200/80 bg-[#f7f6f3]/60 px-6 py-4">
-                          {canSendMessages ? (
-                            <form
-                              onSubmit={handleSendMessage}
-                              className="flex flex-col gap-3 md:flex-row md:items-end md:gap-4"
-                            >
-                              <div className="flex-1">
-                                <textarea
-                                  value={userMessage}
-                                  onChange={(e) => setUserMessage(e.target.value)}
-                                  placeholder="Ask a question about this case..."
-                                  rows={3}
-                                  className="w-full resize-none rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm text-neutral-700 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
-                                  disabled={isSendingMessage}
-                                />
-                              </div>
-
-                              <button
-                                type="submit"
-                                disabled={isSendingMessage || !userMessage.trim()}
-                                className="inline-flex h-11 w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 md:w-32"
-                              >
-                                {isSendingMessage ? "Thinking..." : "Send"}
-                              </button>
-                            </form>
-                          ) : (
-                            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                              <div className="flex items-center gap-2 font-semibold">
-                                <ExclamationTriangleIcon className="h-4 w-4" />
-                                Add at least one document to use the AI chat.
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </aside>
-                  )}
+            <button
+              type="submit"
+              disabled={isSendingMessage || !userMessage.trim()}
+              className="inline-flex h-11 w-full items-center justify-center rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:bg-neutral-300 md:w-32"
+            >
+              {isSendingMessage ? "Thinking..." : "Send"}
+            </button>
+          </form>
+        ) : (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            <div className="flex items-center gap-2 font-semibold">
+              <ExclamationTriangleIcon className="h-4 w-4" />
+              Add at least one document to use the AI chat.
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </aside>
+)}
                 </div>
                 ) : (
                 <div className="flex h-full flex-col items-center justify-center px-6 py-12 text-center">
