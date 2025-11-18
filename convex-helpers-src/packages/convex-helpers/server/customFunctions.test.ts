@@ -1,0 +1,799 @@
+import type { CustomCtx } from "./customFunctions.js";
+import {
+  customAction,
+  customCtx,
+  customMutation,
+  customQuery,
+  NoOp,
+} from "./customFunctions.js";
+import { wrapDatabaseWriter } from "./rowLevelSecurity.js";
+import type { SessionId } from "./sessions.js";
+import { vSessionId } from "./sessions.js";
+import { convexTest } from "convex-test";
+import type {
+  ApiFromModules,
+  Auth,
+  ActionBuilder,
+  DataModelFromSchemaDefinition,
+  DefaultFunctionArgs,
+  GenericDatabaseReader,
+  MutationBuilder,
+  QueryBuilder,
+  RegisteredQuery,
+} from "convex/server";
+import {
+  actionGeneric,
+  anyApi,
+  defineSchema,
+  defineTable,
+  mutationGeneric,
+  queryGeneric,
+} from "convex/server";
+import { v } from "convex/values";
+import {
+  afterEach,
+  assertType,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  test,
+  vi,
+} from "vitest";
+import { modules } from "./setup.test.js";
+
+const schema = defineSchema({
+  users: defineTable({
+    tokenIdentifier: v.string(),
+  }).index("tokenIdentifier", ["tokenIdentifier"]),
+});
+type DataModel = DataModelFromSchemaDefinition<typeof schema>;
+type DatabaseReader = GenericDatabaseReader<DataModel>;
+const query = queryGeneric as QueryBuilder<DataModel, "public">;
+const mutation = mutationGeneric as MutationBuilder<DataModel, "public">;
+const action = actionGeneric as ActionBuilder<DataModel, "public">;
+
+const authenticatedQueryBuilder = customQuery(
+  query,
+  customCtx(async (ctx) => {
+    const user = await getUserByTokenIdentifier(ctx);
+    return { user };
+  }),
+);
+
+type AuthQueryCtx = CustomCtx<typeof authenticatedQueryBuilder>;
+
+// Example query that doesn't specify argument validation (no `args` param).
+export const unvalidatedArgsQuery = authenticatedQueryBuilder((ctx) => {
+  return { user: ctx.user };
+});
+
+// You can also use the CustomCtx to type functions that take the custom ctx.
+function getSomethingInternal(ctx: AuthQueryCtx, args: { foo: string }) {
+  return [args.foo, ctx.user._id];
+}
+
+export const getSomething = authenticatedQueryBuilder({
+  args: { foo: v.string() },
+  handler: getSomethingInternal,
+});
+
+const apiMutationBuilder = customMutation(mutation, {
+  args: { apiKey: v.string() },
+  input: async (ctx, args) => {
+    if (args.apiKey !== process.env.API_KEY) throw new Error("Invalid API key");
+    // validate api key in DB
+    return { ctx: {}, args: {} };
+  },
+});
+
+export const fnCalledFromMyBackend = apiMutationBuilder({
+  args: { tokenIdentifier: v.string() },
+  handler: async (ctx, args) => {
+    return ctx.db.insert("users", args);
+  },
+});
+
+export const myMutationBuilder = customMutation(mutation, {
+  args: { sessionId: vSessionId },
+  input: async (ctx, { sessionId }) => {
+    const db = wrapDatabaseWriter({}, ctx.db, {
+      users: {
+        insert: async (_, doc) =>
+          doc.tokenIdentifier ===
+          (await ctx.auth.getUserIdentity())?.tokenIdentifier,
+      },
+    });
+    return { ctx: { sessionId, db }, args: {} };
+  },
+});
+
+export const create = myMutationBuilder({
+  args: { tokenIdentifier: v.string() },
+  handler: async (ctx, args) => {
+    if (!ctx.sessionId) throw new Error("No session ID");
+    return ctx.db.insert("users", args);
+  },
+});
+
+async function getUserByTokenIdentifier(ctx: {
+  auth: Auth;
+  db: DatabaseReader;
+}) {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) throw new Error("Unauthenticated");
+  const user = await ctx.db
+    .query("users")
+    .withIndex("tokenIdentifier", (q) =>
+      q.eq("tokenIdentifier", identity.tokenIdentifier),
+    )
+    .unique();
+  if (!user) throw new Error("User not found");
+  return user;
+}
+
+/**
+ * Testing that it conforms to query, mutation, action types when no args
+ * are added
+ */
+
+customQuery(
+  query,
+  customCtx((_ctx) => ({ foo: "bar" })),
+) satisfies typeof query;
+customMutation(
+  mutation,
+  customCtx((_ctx) => ({})),
+) satisfies typeof mutation;
+customAction(
+  action,
+  customCtx((_ctx) => ({})),
+) satisfies typeof action;
+
+customQuery({} as any, {
+  args: {},
+  input: async () => ({
+    ctx: {},
+    args: {},
+  }),
+}) satisfies typeof query;
+
+customMutation(mutation, {
+  args: {},
+  input: async () => ({
+    ctx: {},
+    args: {},
+  }),
+}) satisfies typeof mutation;
+
+customAction(action, {
+  args: {},
+  input: async () => ({
+    ctx: {},
+    args: {},
+  }),
+}) satisfies typeof action;
+
+/**
+ * Testing custom function modifications.
+ */
+
+/**
+ * Adding ctx
+ */
+const addCtxArg = customQuery(
+  query,
+  customCtx(() => {
+    return { a: "hi" };
+  }),
+);
+
+export const addC = addCtxArg({
+  args: {},
+  handler: async (ctx) => {
+    return { ctxA: ctx.a }; // !!!
+  },
+});
+queryMatches(addC, {}, { ctxA: "" });
+
+// Unvalidated
+export const addCU = addCtxArg({
+  handler: async (ctx) => {
+    return { ctxA: ctx.a }; // !!!
+  },
+});
+queryMatches(addCU, {}, { ctxA: "" });
+
+// Unvalidated variant 2
+export const addCU2 = addCtxArg(async (ctx) => {
+  return { ctxA: ctx.a }; // !!!
+});
+queryMatches(addCU2, {}, { ctxA: "" });
+
+// Unvalidated with type annotation
+export const addCU3 = addCtxArg({
+  handler: async (ctx, _args: { foo: number }) => {
+    return { ctxA: ctx.a }; // !!!
+  },
+});
+queryMatches(addCU3, { foo: 123 }, { ctxA: "" });
+
+export const addCtxWithExistingArg = addCtxArg({
+  args: { b: v.string() },
+  handler: async (ctx, args) => {
+    return { ctxA: ctx.a, argB: args.b }; // !!!
+  },
+});
+queryMatches(addCtxWithExistingArg, { b: "" }, { ctxA: "", argB: "" });
+
+/**
+ * Adding arg
+ */
+const addArg = customQuery(query, {
+  args: {},
+  input: async () => {
+    return { ctx: {}, args: { a: "hi" } };
+  },
+});
+export const add = addArg({
+  args: {},
+  handler: async (_ctx, args) => {
+    return { argsA: args.a }; // !!!
+  },
+});
+queryMatches(add, {}, { argsA: "" });
+export const addUnverified = addArg({
+  handler: async (_ctx, args) => {
+    return { argsA: args.a }; // !!!
+  },
+});
+queryMatches(addUnverified, {}, { argsA: "" });
+export const addUnverified2 = addArg((_ctx, args) => {
+  return { argsA: args.a }; // !!!
+});
+queryMatches(addUnverified2, {}, { argsA: "" });
+
+/**
+ * Consuming arg, add to ctx
+ */
+const consumeArg = customQuery(query, {
+  args: { a: v.string() },
+  input: async (_ctx, { a }) => {
+    return { ctx: { a }, args: {} };
+  },
+});
+export const consume = consumeArg({
+  args: {},
+  handler: async (ctx, emptyArgs) => {
+    assertType<Record<string, never>>(emptyArgs); // !!!
+    return { ctxA: ctx.a };
+  },
+});
+queryMatches(consume, { a: "" }, { ctxA: "" });
+
+// NOTE: We don't test for unvalidated functions when args are present
+
+expect(() =>
+  consumeArg({
+    // @ts-expect-error because the custom function requires args, we can't have
+    // an unvalidated function that expects args
+    handler: async (ctx, emptyArgs: object) => {
+      assertType<object>(emptyArgs); // !!!
+      return { ctxA: ctx.a };
+    },
+  }),
+).toThrow();
+
+// TODO: this should be a type error (currently just push-time error)
+// const consumeUnvalidatedWithArgs = consumeArg(
+//   async (ctx, args: { b: number }) => {
+//     assertType<{ b: number }>(args); // !!!
+//     return { ctxA: ctx.a };
+//   }
+// );
+// queryMatches(consumeUnvalidatedWithArgs, { a: "", b: 3 }, { ctxA: "" });
+
+/**
+ * Passing Through arg, also add to ctx for fun
+ */
+const passThrougArg = customQuery(query, {
+  args: { a: v.string() },
+  input: async (_ctx, args) => {
+    return { ctx: { a: args.a }, args };
+  },
+});
+export const passThrough = passThrougArg({
+  args: {},
+  handler: async (ctx, args) => {
+    return { ctxA: ctx.a, argsA: args.a }; // !!!
+  },
+});
+queryMatches(passThrough, { a: "" }, { ctxA: "", argsA: "" });
+
+/**
+ * Modify arg type, don't need to re-defined "a" arg
+ */
+const modifyArg = customQuery(query, {
+  args: { a: v.string() },
+  input: async (_ctx, { a }) => {
+    return { ctx: { a }, args: { a: 123 } }; // !!!
+  },
+});
+export const modify = modifyArg({
+  args: {},
+  handler: async (ctx, args) => {
+    args.a.toFixed(); // !!!
+    return { ctxA: ctx.a, argsA: args.a };
+  },
+});
+queryMatches(modify, { a: "" }, { ctxA: "", argsA: 0 }); // !!!
+
+/**
+ * Redefine arg type with the same type: OK!
+ */
+const redefineArg = customQuery(query, {
+  args: { a: v.string() },
+  input: async (_ctx, args) => ({ ctx: {}, args }),
+});
+export const redefine = redefineArg({
+  args: { a: v.string() },
+  handler: async (_ctx, args) => {
+    return { argsA: args.a };
+  },
+});
+queryMatches(redefine, { a: "" }, { argsA: "" });
+
+/**
+ * Refine arg type with a more specific type: OK!
+ */
+const refineArg = customQuery(query, {
+  args: { a: v.optional(v.string()) },
+  input: async (_ctx, args) => ({ ctx: {}, args }),
+});
+export const refined = refineArg({
+  args: { a: v.string() },
+  handler: async (_ctx, args) => {
+    return { argsA: args.a };
+  },
+});
+queryMatches(refined, { a: "" }, { argsA: "" });
+
+/**
+ * Redefine arg type with different type: error!
+ */
+const badRedefineArg = customQuery(query, {
+  args: { a: v.string(), b: v.number() },
+  input: async (_ctx, args) => ({ ctx: {}, args }),
+});
+expect(() => {
+  badRedefineArg({
+    args: { a: v.number() },
+    handler: async (_ctx, args) => {
+      return { argsA: args.a };
+    },
+  });
+}).toThrow();
+
+/**
+ * Nested custom functions
+ * Ensure they add and remove ctx and args as expected when compounded.
+ */
+const inner = customQuery(
+  query,
+  customCtx(() => ({ inner: "inner" })),
+);
+const outerAdder = customQuery(inner, {
+  args: { outer: v.string() },
+  input: async (_ctx, args) => ({ ctx: { outer: args.outer }, args }),
+});
+export const outerAdds = outerAdder({
+  args: { a: v.string() },
+  handler: async (ctx, args) => {
+    return { ctxInner: (ctx as any)["inner"], ctxOuter: ctx.outer, ...args };
+  },
+});
+export const outerRemover = customQuery(inner, {
+  args: { outer: v.string() },
+  input: async (_ctx, _args) => ({ ctx: { inner: undefined }, args: {} }),
+});
+export const outerRemoved = outerRemover({
+  args: { a: v.string() },
+  handler: async (ctx, args) => {
+    return { ctxInner: ctx["inner"], ...args };
+  },
+});
+
+/**
+ * Adding extra args to `input`
+ */
+const extraArgQueryBuilder = customQuery(query, {
+  args: { a: v.string() },
+  input: async (_ctx, args, { extraArg }: { extraArg: string }) => ({
+    ctx: { extraArg },
+    args,
+  }),
+});
+export const extraArgQuery = extraArgQueryBuilder({
+  args: {},
+  extraArg: "foo",
+  handler: async (ctx) => {
+    return { ctxA: ctx.extraArg };
+  },
+});
+queryMatches(extraArgQuery, {}, { ctxA: "foo" });
+
+/**
+ * Test helpers
+ */
+function queryMatches<
+  A extends DefaultFunctionArgs,
+  R,
+  T extends RegisteredQuery<"public", A, R>,
+>(_f: T, _a: A, _v: R) {}
+
+const testApi: ApiFromModules<{
+  fns: {
+    getSomething: typeof getSomething;
+    unvalidatedArgsQuery: typeof unvalidatedArgsQuery;
+    fnCalledFromMyBackend: typeof fnCalledFromMyBackend;
+    add: typeof add;
+    addUnverified: typeof addUnverified;
+    addUnverified2: typeof addUnverified2;
+    addC: typeof addC;
+    addCU: typeof addCU;
+    addCU2: typeof addCU2;
+    addCtxWithExistingArg: typeof addCtxWithExistingArg;
+    consume: typeof consume;
+    passThrough: typeof passThrough;
+    modify: typeof modify;
+    redefine: typeof redefine;
+    refined: typeof refined;
+    create: typeof create;
+    outerAdds: typeof outerAdds;
+    outerRemoved: typeof outerRemoved;
+    extraArgQuery: typeof extraArgQuery;
+  };
+}>["fns"] = anyApi["customFunctions.test"] as any;
+
+test("custom function with user auth", async () => {
+  const t = convexTest(schema, modules);
+  const userId = await t.run(async (ctx) => {
+    return ctx.db.insert("users", { tokenIdentifier: "foo" });
+  });
+  const authed = t.withIdentity({ tokenIdentifier: "foo" });
+
+  // Make sure the custom function is protected by auth.
+  await expect(() =>
+    t.query(testApi.getSomething, { foo: "foo" }),
+  ).rejects.toThrow("Unauthenticated");
+  await expect(() =>
+    t
+      .withIdentity({ tokenIdentifier: "bar" })
+      .query(testApi.getSomething, { foo: "foo" }),
+  ).rejects.toThrow("User not found");
+
+  // Make sure the custom function works with auth.
+  const user = await authed.query(testApi.unvalidatedArgsQuery, {});
+  expect(user).toMatchObject({ user: { _id: userId, tokenIdentifier: "foo" } });
+  expect(
+    await authed.query(testApi.getSomething, { foo: "foo" }),
+  ).toMatchObject(["foo", userId]);
+  await authed.mutation(testApi.create, {
+    tokenIdentifier: "foo",
+    sessionId: "bar" as SessionId,
+  });
+  await expect(() =>
+    authed.mutation(testApi.create, {
+      tokenIdentifier: "bar",
+      sessionId: "bar" as SessionId,
+    }),
+  ).rejects.toThrow("insert access not allowed");
+  await expect(() =>
+    authed.mutation(testApi.create, {
+      tokenIdentifier: "bar",
+      sessionId: "" as SessionId,
+    }),
+  ).rejects.toThrow("No session ID");
+});
+
+describe("custom functions with api auth", () => {
+  const originalAPIKey = process.env.API_KEY;
+  const apiKey = "foo";
+  beforeEach(() => {
+    process.env.API_KEY = apiKey;
+  });
+  afterEach(() => {
+    process.env.API_KEY = originalAPIKey;
+  });
+  test("api auth", async () => {
+    const t = convexTest(schema, modules);
+    await t.mutation(testApi.fnCalledFromMyBackend, {
+      apiKey,
+      tokenIdentifier: "bar",
+    });
+    await expect(() =>
+      t.mutation(testApi.fnCalledFromMyBackend, {
+        apiKey: "",
+        tokenIdentifier: "bar",
+      }),
+    ).rejects.toThrow("Invalid API key");
+  });
+});
+
+describe("custom functions", () => {
+  test("noop", async () => {
+    const noopQuery = customQuery(query, NoOp);
+    const noopQueryFn = noopQuery({
+      args: { foo: v.string() },
+      handler: async (ctx, args) => {
+        return { bar: args.foo };
+      },
+    });
+    queryMatches(noopQueryFn, { foo: "" }, { bar: "" });
+    const sameQuery = query({
+      args: { foo: v.string() },
+      handler: async (ctx, args) => {
+        return { bar: args.foo };
+      },
+    });
+    expectTypeOf(noopQueryFn).toEqualTypeOf(sameQuery);
+
+    const noopMutation = customMutation(mutation, NoOp);
+    const noopMutationFn = noopMutation({
+      args: { foo: v.string() },
+      handler: async (ctx, args) => {
+        return { bar: args.foo };
+      },
+    });
+    const sameMutation = mutation({
+      args: { foo: v.string() },
+      handler: async (ctx, args) => {
+        return { bar: args.foo };
+      },
+    });
+    expectTypeOf(noopMutationFn).toEqualTypeOf(sameMutation);
+
+    const noopAction = customAction(action, NoOp);
+    const noopActionFn = noopAction({
+      args: { foo: v.string() },
+      handler: async (ctx, args) => {
+        return { bar: args.foo };
+      },
+    });
+    const sameAction = action({
+      args: { foo: v.string() },
+      handler: async (ctx, args) => {
+        return { bar: args.foo };
+      },
+    });
+    expectTypeOf(noopActionFn).toEqualTypeOf(sameAction);
+  });
+
+  test("add args", async () => {
+    const t = convexTest(schema, modules);
+    expect(await t.query(testApi.add, {})).toMatchObject({
+      argsA: "hi",
+    });
+    expect(await t.query(testApi.addUnverified, {})).toMatchObject({
+      argsA: "hi",
+    });
+    expect(await t.query(testApi.addUnverified2, {})).toMatchObject({
+      argsA: "hi",
+    });
+  });
+
+  test("add ctx", async () => {
+    const t = convexTest(schema, modules);
+    expect(await t.query(testApi.addC, {})).toMatchObject({
+      ctxA: "hi",
+    });
+    expect(await t.query(testApi.addCU, {})).toMatchObject({
+      ctxA: "hi",
+    });
+    expect(await t.query(testApi.addCU2, {})).toMatchObject({
+      ctxA: "hi",
+    });
+    expect(
+      await t.query(testApi.addCtxWithExistingArg, { b: "foo" }),
+    ).toMatchObject({
+      ctxA: "hi",
+      argB: "foo",
+    });
+  });
+
+  test("consume arg, add to ctx", async () => {
+    const t = convexTest(schema, modules);
+    expect(await t.query(testApi.consume, { a: "foo" })).toMatchObject({
+      ctxA: "foo",
+    });
+  });
+
+  test("pass through arg + ctx", async () => {
+    const t = convexTest(schema, modules);
+    expect(await t.query(testApi.passThrough, { a: "foo" })).toMatchObject({
+      ctxA: "foo",
+      argsA: "foo",
+    });
+  });
+
+  test("modify arg type", async () => {
+    const t = convexTest(schema, modules);
+    expect(await t.query(testApi.modify, { a: "foo" })).toMatchObject({
+      ctxA: "foo",
+      argsA: 123,
+    });
+  });
+
+  test("redefine arg", async () => {
+    const t = convexTest(schema, modules);
+    expect(await t.query(testApi.redefine, { a: "foo" })).toMatchObject({
+      argsA: "foo",
+    });
+  });
+
+  test("refined arg", async () => {
+    const t = convexTest(schema, modules);
+    expect(await t.query(testApi.refined, { a: "foo" })).toMatchObject({
+      argsA: "foo",
+    });
+    await expect(() =>
+      t.query(testApi.refined, { a: undefined as any }),
+    ).rejects.toThrow("Validator error: Missing required field `a`");
+  });
+
+  test("still validates args", async () => {
+    const t = convexTest(schema, modules);
+    await expect(() =>
+      t.query(testApi.redefine, { a: 3 as any }),
+    ).rejects.toThrow("Validator error: Expected `string`");
+  });
+});
+
+describe("nested custom functions", () => {
+  test("add args and ctx", async () => {
+    const t = convexTest(schema, modules);
+    expect(
+      await t.query(testApi.outerAdds, { a: "hi", outer: "outer" }),
+    ).toMatchObject({
+      ctxInner: "inner",
+      ctxOuter: "outer",
+      a: "hi",
+      outer: "outer",
+    });
+  });
+  test("remove args", async () => {
+    const t = convexTest(schema, modules);
+    expect(
+      await t.query(testApi.outerRemoved, { a: "hi", outer: "bye" }),
+    ).toStrictEqual({ a: "hi" });
+  });
+
+  test("still validates args", async () => {
+    const t = convexTest(schema, modules);
+    await expect(() =>
+      t.query(testApi.outerAdds, { a: 3 as any, outer: "" }),
+    ).rejects.toThrow("Validator error: Expected `string`");
+  });
+});
+
+describe("extra args", () => {
+  test("add extra args", async () => {
+    const t = convexTest(schema, modules);
+    expect(await t.query(testApi.extraArgQuery, { a: "foo" })).toMatchObject({
+      ctxA: "foo",
+    });
+  });
+});
+
+describe("finally callback", () => {
+  test("finally callback is called with result and context", async () => {
+    const t = convexTest(schema, modules);
+    const finallyMock = vi.fn();
+
+    const withFinally = customQuery(query, {
+      args: {},
+      input: async () => ({
+        ctx: { foo: "bar" },
+        args: {},
+        onSuccess: ({ result }) => {
+          finallyMock(result);
+        },
+      }),
+    });
+
+    const successFn = withFinally({
+      args: {},
+      handler: async (ctx) => {
+        return { success: true, foo: ctx.foo };
+      },
+    });
+
+    await t.run(async (ctx) => {
+      const result = await (successFn as any)._handler(ctx, {});
+      expect(result).toEqual({ success: true, foo: "bar" });
+
+      expect(finallyMock).toHaveBeenCalledWith({ success: true, foo: "bar" });
+    });
+
+    finallyMock.mockClear();
+
+    const errorFn = withFinally({
+      args: {},
+      handler: async () => {
+        throw new Error("Test error");
+      },
+    });
+
+    await t.run(async (ctx) => {
+      try {
+        await (errorFn as any)._handler(ctx, {});
+        expect.fail("Should have thrown an error");
+      } catch (e: unknown) {
+        const error = e as Error;
+        expect(error.message).toContain("Test error");
+      }
+
+      expect(finallyMock).not.toHaveBeenCalled();
+    });
+  });
+
+  test("finally callback with mutation", async () => {
+    const t = convexTest(schema, modules);
+    const finallyMock = vi.fn();
+
+    const withFinally = customMutation(mutation, {
+      args: {},
+      input: async () => ({
+        ctx: { foo: "bar" },
+        args: {},
+        onSuccess: ({ result }) => {
+          finallyMock(result);
+        },
+      }),
+    });
+
+    const mutationFn = withFinally({
+      args: {},
+      handler: async (ctx) => {
+        return { updated: true, foo: ctx.foo };
+      },
+    });
+
+    await t.run(async (ctx) => {
+      const result = await (mutationFn as any)._handler(ctx, {});
+      expect(result).toEqual({ updated: true, foo: "bar" });
+
+      expect(finallyMock).toHaveBeenCalledWith({ updated: true, foo: "bar" });
+    });
+  });
+
+  test("finally callback with action", async () => {
+    const t = convexTest(schema, modules);
+    const finallyMock = vi.fn();
+
+    const withFinally = customAction(action, {
+      args: {},
+      input: async () => ({
+        ctx: { foo: "bar" },
+        args: {},
+        onSuccess: ({ result }) => {
+          finallyMock(result);
+        },
+      }),
+    });
+
+    const actionFn = withFinally({
+      args: {},
+      handler: async (ctx) => {
+        return { executed: true, foo: ctx.foo };
+      },
+    });
+
+    await t.run(async (ctx) => {
+      const result = await (actionFn as any)._handler(ctx, {});
+      expect(result).toEqual({ executed: true, foo: "bar" });
+
+      expect(finallyMock).toHaveBeenCalledWith({ executed: true, foo: "bar" });
+    });
+  });
+});
