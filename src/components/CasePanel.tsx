@@ -82,7 +82,7 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
   const removeDocumentFromCase = useMutation(api.cases.removeDocumentFromCase);
   const sendMessageToCaseAI = useAction(api.cases.sendMessageToCaseAI);
   const generateUploadUrl = useMutation(api.files.generateUploadUrl);
-  const saveFile = useMutation(api.files.saveFile);
+  const convertUploadToDocument = useAction(api.fileExtraction.convertUploadToDocument);
   const deleteCaseFile = useMutation(api.files.deleteFile);
 
   useEffect(() => {
@@ -280,18 +280,22 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
 
       const { storageId } = await uploadResponse.json();
 
-      await saveFile({
+      const result = await convertUploadToDocument({
+        storageId,
         name: file.name,
         type: file.type,
         size: file.size,
-        storageId,
         caseId: selectedCaseId as Id<"cases">,
       });
 
-      toast.success("File uploaded to case");
-    } catch (error) {
+      if (result.status === "ok") {
+        toast.success("File converted into a case document. Review it under Case Documents.");
+      } else {
+        throw new Error(result.message || "Could not convert file.");
+      }
+    } catch (error: any) {
       console.error("Case file upload error", error);
-      toast.error("Failed to upload file");
+      toast.error(error?.message || "Failed to upload file");
     } finally {
       if (caseFileInputRef.current) {
         caseFileInputRef.current.value = "";

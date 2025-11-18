@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 // Helper function to get authenticated user
@@ -307,6 +307,68 @@ export const generateShareableLink = mutation({
     });
 
     return shareableLink;
+  },
+});
+
+export const createImportedDocument = internalMutation({
+  args: {
+    title: v.string(),
+    content: v.string(),
+    structuredBlocks: v.optional(
+      v.array(
+        v.object({
+          type: v.string(),
+          text: v.string(),
+        })
+      )
+    ),
+    userId: v.id("users"),
+    sourceName: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+
+    const documentId = await ctx.db.insert("documents", {
+      title: args.title,
+      content: args.content,
+      isPublic: false,
+      createdBy: args.userId,
+      lastModifiedBy: args.userId,
+      lastModifiedAt: now,
+      version: 1,
+      structuredBlocks: args.structuredBlocks,
+    });
+
+    await ctx.db.insert("documentVersions", {
+      documentId,
+      content: args.content,
+      version: 1,
+      createdBy: args.userId,
+      createdAt: now,
+      changeDescription: args.sourceName
+        ? `Imported from ${args.sourceName}`
+        : "Imported document",
+    });
+
+    await ctx.db.insert("auditLogs", {
+      documentId,
+      userId: args.userId,
+      action: "import_from_file",
+      details: args.sourceName,
+      timestamp: now,
+    });
+
+    return documentId;
+  },
+});
+
+export const linkDocumentToFile = internalMutation({
+  args: {
+    documentId: v.id("documents"),
+    fileId: v.id("files"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.documentId, { sourceFileId: args.fileId });
   },
 });
 

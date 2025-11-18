@@ -198,3 +198,27 @@ export const setExtractedText = internalMutation({
     await ctx.db.patch(args.fileId, { extractedText: args.extractedText });
   },
 });
+
+export const createFileRecord = internalMutation({
+  args: {
+    uploadedBy: v.id("users"),
+    name: v.string(),
+    type: v.string(),
+    size: v.number(),
+    storageId: v.id("_storage"),
+    documentId: v.optional(v.id("documents")),
+    caseId: v.optional(v.id("cases")),
+  },
+  handler: async (ctx, args) => {
+    return ctx.db.insert("files", {
+      name: args.name,
+      type: args.type,
+      size: args.size,
+      storageId: args.storageId,
+      uploadedBy: args.uploadedBy,
+      documentId: args.documentId,
+      caseId: args.caseId,
+      uploadedAt: Date.now(),
+    });
+  },
+});

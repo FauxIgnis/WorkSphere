@@ -17,6 +17,7 @@ import type * as comments from "../comments.js";
 import type * as documents from "../documents.js";
 import type * as fileExtraction from "../fileExtraction.js";
 import type * as files from "../files.js";
+import type * as getText from "../getText.js";
 import type * as http from "../http.js";
 import type * as notifications from "../notifications.js";
 import type * as presence from "../presence.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   documents: typeof documents;
   fileExtraction: typeof fileExtraction;
   files: typeof files;
+  getText: typeof getText;
   http: typeof http;
   notifications: typeof notifications;
   presence: typeof presence;

@@ -13,6 +13,15 @@ const applicationTables = {
     version: v.number(),
     shareableLink: v.optional(v.string()),
     caseId: v.optional(v.id("cases")),
+    structuredBlocks: v.optional(
+      v.array(
+        v.object({
+          type: v.string(),
+          text: v.string(),
+        })
+      )
+    ),
+    sourceFileId: v.optional(v.id("files")),
   })
     .index("by_creator", ["createdBy"])
     .index("by_shareable_link", ["shareableLink"])
