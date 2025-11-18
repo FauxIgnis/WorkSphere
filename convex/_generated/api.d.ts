@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as aiChats from "../aiChats.js";
 import type * as audit from "../audit.js";
 import type * as auth from "../auth.js";
 import type * as calendar from "../calendar.js";
@@ -32,6 +33,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  aiChats: typeof aiChats;
   audit: typeof audit;
   auth: typeof auth;
   calendar: typeof calendar;

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { Id } from "../../convex/_generated/dataModel";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -16,6 +15,7 @@ import {
   LockClosedIcon,
   GlobeAltIcon,
   BellIcon,
+  SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { NotificationCenter } from "./NotificationCenter";
 import { SubscriptionModal } from "./SubscriptionModal";
@@ -23,8 +23,8 @@ import { SubscriptionModal } from "./SubscriptionModal";
 interface SidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
-  activeView: "editor" | "tasks" | "calendar" | "audit" | "cases";
-  onViewChange: (view: "editor" | "tasks" | "calendar" | "audit" | "cases") => void;
+  activeView: "editor" | "tasks" | "calendar" | "audit" | "cases" | "chat";
+  onViewChange: (view: "editor" | "tasks" | "calendar" | "audit" | "cases" | "chat") => void;
   selectedDocumentId: string | null;
   onDocumentSelect: (documentId: string | null) => void;
   selectedCaseId: string | null;
@@ -100,6 +100,7 @@ export function Sidebar({
     { id: "tasks", label: "Tasks", icon: CheckCircleIcon },
     { id: "calendar", label: "Calendar", icon: CalendarIcon },
     { id: "audit", label: "Audit Log", icon: ClipboardDocumentListIcon },
+    { id: "chat", label: "WS Chat", icon: SparklesIcon },
   ] as const;
 
   if (collapsed) {
@@ -220,7 +221,7 @@ export function Sidebar({
           </nav>
         </div>
 
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col overflow-hidden">
           <div className="border-b border-neutral-200 px-5 py-4">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-neutral-700">Documents</h3>

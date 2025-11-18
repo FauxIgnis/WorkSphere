@@ -10,10 +10,11 @@ import { TaskPanel } from "./components/TaskPanel";
 import { CalendarPanel } from "./components/CalendarPanel";
 import { AuditPanel } from "./components/AuditPanel";
 import { CasePanel } from "./components/CasePanel";
+import { WorkspaceChat } from "./components/WorkspaceChat";
 import { SharedDocument } from "./SharedDocument";
 import { Toaster } from "sonner";
 
-type WorkspaceView = 'editor' | 'tasks' | 'calendar' | 'audit' | 'cases';
+type WorkspaceView = 'editor' | 'tasks' | 'calendar' | 'audit' | 'cases' | 'chat';
 
 function MainApp() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -29,6 +30,7 @@ function MainApp() {
     tasks: 'Tasks',
     calendar: 'Calendar',
     audit: 'Audit Log',
+    chat: 'WS Chat',
   };
 
   const renderMainContent = () => {
@@ -54,6 +56,8 @@ function MainApp() {
         return <CalendarPanel />;
       case 'audit':
         return <AuditPanel documentId={selectedDocumentId} />;
+      case 'chat':
+        return <WorkspaceChat />;
       default:
         return null;
     }

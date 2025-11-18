@@ -219,6 +219,24 @@ const applicationTables = {
     .index("by_author", ["authorId"])
     .index("by_timestamp", ["timestamp"]),
 
+  aiChats: defineTable({
+    userId: v.id("users"),
+    title: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    lastMessageAt: v.optional(v.number()),
+    lastMessagePreview: v.optional(v.string()),
+  })
+    .index("by_user_updatedAt", ["userId", "updatedAt"]),
+
+  aiChatMessages: defineTable({
+    chatId: v.id("aiChats"),
+    role: v.union(v.literal("user"), v.literal("assistant")),
+    content: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_chat_createdAt", ["chatId", "createdAt"]),
+
   tasks: defineTable({
     title: v.string(),
     description: v.optional(v.string()),
