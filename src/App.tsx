@@ -69,15 +69,17 @@ function MainApp() {
         <div className="min-h-screen flex items-center justify-center bg-[#f7f6f3] p-6">
           <div className="max-w-md w-full">
             <div className="text-center mb-10">
-              <div className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-4 py-1 text-xs font-medium uppercase tracking-[0.2em] text-neutral-500">
-                Kodex Workspace
+              <div className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-400">
+                <span>Welcome</span>
               </div>
-              <h1 className="mt-6 text-4xl font-semibold text-neutral-900">Welcome back</h1>
+              <h1 className="mt-6 text-4xl font-semibold text-neutral-900">Sign in to continue</h1>
               <p className="mt-3 text-sm text-neutral-500">
-                Sign in to access your collaborative legal workspace with AI assistance.
+                Unlock collaborative drafting, AI research, and case automation in one calm workspace.
               </p>
             </div>
-            <SignInForm />
+            <div className="rounded-3xl border border-neutral-200 bg-white/90 p-6 shadow-sm">
+              <SignInForm />
+            </div>
           </div>
         </div>
       </Unauthenticated>
@@ -97,7 +99,6 @@ function MainApp() {
           <div className="flex-1 flex flex-col overflow-hidden">
             <header className="flex h-14 items-center justify-between border-b border-neutral-200/70 bg-[#f7f6f3]/90 px-6 backdrop-blur">
               <div className="flex flex-col">
-                <span className="text-[11px] uppercase tracking-[0.3em] text-neutral-400">Kodex Workspace</span>
                 <div className="mt-1 flex items-center gap-2 text-sm text-neutral-500">
                   <span className="font-medium text-neutral-700">Home</span>
                   <span className="text-neutral-300">/</span>

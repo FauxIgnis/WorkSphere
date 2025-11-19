@@ -67,7 +67,8 @@ export function SubscriptionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-950/60 px-4 py-6 backdrop-blur-sm">
-      <div className="w-full max-w-4xl overflow-hidden rounded-3xl border border-neutral-200/70 bg-[#fdfcf8] shadow-2xl">
+      <div className="w-full max-w-4xl overflow-hidden rounded-3xl border border-neutral-200/70 bg-[#fdfcf8] shadow-2xl max-h-[90vh] flex flex-col">
+        <div className="flex-1 overflow-y-auto">
         <div className="flex items-start justify-between border-b border-neutral-200/70 bg-white/70 px-8 py-6">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.4em] text-neutral-400">
@@ -189,6 +190,15 @@ export function SubscriptionModal({
               </button>
             </div>
           </div>
+        </div>
+        </div>
+        <div className="border-t border-neutral-200/70 bg-white/80 px-8 py-4 text-right">
+          <button
+            onClick={onClose}
+            className="inline-flex items-center rounded-full border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-900"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>

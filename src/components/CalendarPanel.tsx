@@ -8,6 +8,9 @@ import {
   MapPinIcon,
   UsersIcon,
   PaperAirplaneIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { toast } from "sonner";
 
@@ -20,9 +23,19 @@ export function CalendarPanel() {
     endTime: "",
     location: "",
   });
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [eventForm, setEventForm] = useState({
+    title: "",
+    description: "",
+    startTime: "",
+    endTime: "",
+    location: "",
+  });
 
   const events = useQuery(api.calendar.getUserEvents, {}) || [];
   const createEvent = useMutation(api.calendar.createEvent);
+  const updateEvent = useMutation(api.calendar.updateEvent);
+  const removeEvent = useMutation(api.calendar.deleteEvent);
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +56,54 @@ export function CalendarPanel() {
     } catch (error) {
       toast.error("Failed to create event");
       console.error("Create event error:", error);
+    }
+  };
+
+  const handleEditEvent = (event: (typeof events)[number]) => {
+    setEditingEventId(event._id);
+    setEventForm({
+      title: event.title,
+      description: event.description || "",
+      startTime: new Date(event.startTime).toISOString().slice(0, 16),
+      endTime: new Date(event.endTime).toISOString().slice(0, 16),
+      location: event.location || "",
+    });
+  };
+
+  const handleUpdateEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEventId || !eventForm.title.trim() || !eventForm.startTime || !eventForm.endTime) return;
+
+    try {
+      await updateEvent({
+        eventId: editingEventId as any,
+        title: eventForm.title,
+        description: eventForm.description || undefined,
+        startTime: new Date(eventForm.startTime).getTime(),
+        endTime: new Date(eventForm.endTime).getTime(),
+        location: eventForm.location || undefined,
+      });
+      toast.success("Event updated");
+      setEditingEventId(null);
+    } catch (error) {
+      console.error("Update event error:", error);
+      toast.error("Failed to update event");
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    const confirmed = window.confirm("Delete this event? This cannot be undone.");
+    if (!confirmed) return;
+
+    try {
+      await removeEvent({ eventId: eventId as any });
+      toast.success("Event deleted");
+      if (editingEventId === eventId) {
+        setEditingEventId(null);
+      }
+    } catch (error) {
+      console.error("Delete event error:", error);
+      toast.error("Failed to delete event");
     }
   };
 
@@ -179,51 +240,163 @@ export function CalendarPanel() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {events.map((event) => (
-                    <div
-                      key={event._id}
-                      className="rounded-2xl border border-neutral-200/80 bg-white px-5 py-5 shadow-sm transition hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-md"
-                    >
-                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-neutral-900">{event.title}</h3>
+                  {events.map((event) => {
+                    const isEditing = editingEventId === event._id;
+                    return (
+                      <div
+                        key={event._id}
+                        className="rounded-2xl border border-neutral-200/80 bg-white px-5 py-5 shadow-sm transition hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-md"
+                      >
+                        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <h3 className="text-lg font-semibold text-neutral-900">{event.title}</h3>
+                                {event.description && (
+                                  <p className="mt-3 text-sm text-neutral-600">{event.description}</p>
+                                )}
+                              </div>
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={() => handleEditEvent(event)}
+                                  className="rounded-full p-1 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700"
+                                  title="Edit event"
+                                >
+                                  <PencilSquareIcon className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteEvent(event._id)}
+                                  className="rounded-full p-1 text-neutral-400 transition hover:bg-neutral-100 hover:text-red-500"
+                                  title="Delete event"
+                                >
+                                  <TrashIcon className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
 
-                          {event.description && (
-                            <p className="mt-3 text-sm text-neutral-600">{event.description}</p>
-                          )}
-
-                          <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-neutral-500">
-                            <span className="inline-flex items-center gap-1">
-                              <ClockIcon className="h-4 w-4 text-neutral-400" />
-                              {new Date(event.startTime).toLocaleString()} – {new Date(event.endTime).toLocaleString()}
-                            </span>
-
-                            {event.location && (
+                            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-neutral-500">
                               <span className="inline-flex items-center gap-1">
-                                <MapPinIcon className="h-4 w-4 text-neutral-400" />
-                                {event.location}
+                                <ClockIcon className="h-4 w-4 text-neutral-400" />
+                                {new Date(event.startTime).toLocaleString()} – {new Date(event.endTime).toLocaleString()}
                               </span>
-                            )}
 
-                            {event.creator && (
-                              <span className="inline-flex items-center gap-1">
-                                <UsersIcon className="h-4 w-4 text-neutral-400" />
-                                Created by {event.creator.name}
-                              </span>
-                            )}
+                              {event.location && (
+                                <span className="inline-flex items-center gap-1">
+                                  <MapPinIcon className="h-4 w-4 text-neutral-400" />
+                                  {event.location}
+                                </span>
+                              )}
+
+                              {event.creator && (
+                                <span className="inline-flex items-center gap-1">
+                                  <UsersIcon className="h-4 w-4 text-neutral-400" />
+                                  Created by {event.creator.name}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
+                            {new Date(event.startTime).toLocaleDateString(undefined, {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                            })}
                           </div>
                         </div>
 
-                        <div className="text-xs font-semibold uppercase tracking-[0.3em] text-neutral-400">
-                          {new Date(event.startTime).toLocaleDateString(undefined, {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </div>
+                        {isEditing && (
+                          <div className="mt-5 rounded-2xl border border-neutral-200 bg-[#f7f6f3]/70 px-4 py-4">
+                            <div className="mb-3 flex items-center justify-between">
+                              <h4 className="text-sm font-semibold text-neutral-700">Edit Event</h4>
+                              <button
+                                onClick={() => setEditingEventId(null)}
+                                className="rounded-full p-1 text-neutral-400 transition hover:bg-neutral-200"
+                                title="Close editor"
+                              >
+                                <XMarkIcon className="h-4 w-4" />
+                              </button>
+                            </div>
+                            <form onSubmit={handleUpdateEvent} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                              <div className="md:col-span-2">
+                                <label className="text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
+                                  Title
+                                </label>
+                                <input
+                                  type="text"
+                                  value={eventForm.title}
+                                  onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
+                                  className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none"
+                                  required
+                                />
+                              </div>
+                              <div className="md:col-span-2">
+                                <label className="text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
+                                  Description
+                                </label>
+                                <textarea
+                                  value={eventForm.description}
+                                  onChange={(e) => setEventForm({ ...eventForm, description: e.target.value })}
+                                  className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none"
+                                  rows={3}
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
+                                  Start time
+                                </label>
+                                <input
+                                  type="datetime-local"
+                                  value={eventForm.startTime}
+                                  onChange={(e) => setEventForm({ ...eventForm, startTime: e.target.value })}
+                                  className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none"
+                                  required
+                                />
+                              </div>
+                              <div>
+                                <label className="text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
+                                  End time
+                                </label>
+                                <input
+                                  type="datetime-local"
+                                  value={eventForm.endTime}
+                                  onChange={(e) => setEventForm({ ...eventForm, endTime: e.target.value })}
+                                  className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none"
+                                  required
+                                />
+                              </div>
+                              <div className="md:col-span-2">
+                                <label className="text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
+                                  Location
+                                </label>
+                                <input
+                                  type="text"
+                                  value={eventForm.location}
+                                  onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })}
+                                  className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none"
+                                />
+                              </div>
+                              <div className="md:col-span-2 flex flex-wrap gap-2">
+                                <button
+                                  type="submit"
+                                  className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-neutral-800"
+                                >
+                                  Save changes
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingEventId(null)}
+                                  className="inline-flex items-center gap-2 rounded-full border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

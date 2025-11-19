@@ -156,10 +156,7 @@ export function Sidebar({
       <div className="flex w-80 flex-col border-r border-neutral-200 bg-[#f7f6f3]">
         <div className="border-b border-neutral-200 px-5 py-4">
           <div className="mb-4 flex items-center justify-between">
-            <div>
-              <span className="text-[11px] uppercase tracking-[0.3em] text-neutral-400">Workspace</span>
-              <p className="mt-1 text-sm font-medium text-neutral-700">Kodex Dashboard</p>
-            </div>
+            <div />
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowNotifications(true)}

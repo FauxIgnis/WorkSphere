@@ -64,6 +64,52 @@ export const updateTaskStatus = mutation({
   },
 });
 
+export const updateTaskDetails = mutation({
+  args: {
+    taskId: v.id("tasks"),
+    description: v.optional(v.string()),
+    dueDate: v.optional(v.number()),
+    priority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthenticatedUser(ctx);
+    const task = await ctx.db.get(args.taskId);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    if (task.assignedTo !== userId && task.createdBy !== userId) {
+      throw new Error("You can only edit tasks assigned to you or created by you");
+    }
+
+    const updates: Record<string, any> = {};
+    if (args.description !== undefined) updates.description = args.description;
+    if (args.dueDate !== undefined) updates.dueDate = args.dueDate;
+    if (args.priority !== undefined) updates.priority = args.priority;
+
+    await ctx.db.patch(args.taskId, updates);
+    return true;
+  },
+});
+
+export const deleteTask = mutation({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthenticatedUser(ctx);
+    const task = await ctx.db.get(args.taskId);
+    if (!task) {
+      throw new Error("Task not found");
+    }
+
+    if (task.assignedTo !== userId && task.createdBy !== userId) {
+      throw new Error("You can only delete tasks assigned to you or created by you");
+    }
+
+    await ctx.db.delete(args.taskId);
+    return true;
+  },
+});
+
 export const getUserTasks = query({
   args: { includeCompleted: v.optional(v.boolean()) },
   handler: async (ctx, args) => {

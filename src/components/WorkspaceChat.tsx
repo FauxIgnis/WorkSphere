@@ -5,6 +5,8 @@ import {
   ChatBubbleLeftRightIcon,
   PaperAirplaneIcon,
   SparklesIcon,
+  PencilSquareIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -21,6 +23,8 @@ export function WorkspaceChat() {
 
   const createChat = useMutation(api.aiChats.createChat);
   const sendMessage = useAction(api.aiChats.sendMessage);
+  const renameChat = useMutation(api.aiChats.renameChat);
+  const deleteChat = useMutation(api.aiChats.deleteChat);
 
   const messages =
     useQuery(
@@ -95,6 +99,35 @@ export function WorkspaceChat() {
     }
   };
 
+  const handleRenameChat = async (chatId: Id<"aiChats">, currentTitle: string) => {
+    const nextTitle = window.prompt("Rename chat", currentTitle || "Untitled chat");
+    if (!nextTitle || !nextTitle.trim()) {
+      return;
+    }
+    try {
+      await renameChat({ chatId, title: nextTitle.trim() });
+      toast.success("Chat renamed");
+    } catch (error) {
+      console.error("Failed to rename chat", error);
+      toast.error("Could not rename chat");
+    }
+  };
+
+  const handleDeleteChat = async (chatId: Id<"aiChats">) => {
+    const confirmed = window.confirm("Delete this chat? This action cannot be undone.");
+    if (!confirmed) return;
+    try {
+      await deleteChat({ chatId });
+      if (selectedChatId === chatId) {
+        setSelectedChatId(null);
+      }
+      toast.success("Chat deleted");
+    } catch (error) {
+      console.error("Failed to delete chat", error);
+      toast.error("Could not delete chat");
+    }
+  };
+
   return (
     <div className="flex h-full bg-[#f7f6f3] text-neutral-900">
       <div className="flex w-80 flex-col border-r border-neutral-200 bg-white/80">
@@ -144,24 +177,56 @@ export function WorkspaceChat() {
                 const isActive = chat._id === selectedChatId;
 
                 return (
-                  <button
+                  <div
                     key={chat._id}
-                    className={`w-full rounded-xl border px-3 py-2 text-left transition ${
+                    className={`relative rounded-xl border px-3 py-2 text-left transition ${
                       isActive
                         ? "border-neutral-900 bg-neutral-900 text-white shadow-sm"
                         : "border-neutral-200 bg-white/70 text-neutral-700 hover:border-neutral-300"
                     }`}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelectedChatId(chat._id)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        setSelectedChatId(chat._id);
+                      }
+                    }}
                   >
-                    <p className="text-sm font-semibold truncate">
+                    <button
+                      className={`absolute right-2 top-2 rounded-full p-1 text-neutral-400 transition ${
+                        isActive ? "hover:text-white" : "hover:text-neutral-700"
+                      }`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleRenameChat(chat._id, chat.title);
+                      }}
+                      title="Rename chat"
+                    >
+                      <PencilSquareIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      className="absolute right-2 top-7 rounded-full p-1 text-[10px] text-neutral-400 hover:text-red-300"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDeleteChat(chat._id);
+                      }}
+                      title="Delete chat"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
+                    <p className="truncate text-sm font-semibold">
                       {chat.title || "Untitled chat"}
                     </p>
-                    <p className={`mt-1 text-xs ${
-                      isActive ? "text-neutral-300" : "text-neutral-500"
-                    }`}>
+                    <p
+                      className={`mt-1 text-xs ${
+                        isActive ? "text-neutral-300" : "text-neutral-500"
+                      }`}
+                    >
                       {chat.lastMessagePreview || "No messages yet"}
                     </p>
-                  </button>
+                  </div>
                 );
               })}
             </div>

@@ -666,7 +666,7 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                                     className="flex items-start justify-between gap-4 rounded-2xl border border-neutral-200/80 bg-white px-4 py-3 shadow-sm"
                                   >
                                     <div className="min-w-0 flex-1">
-                                      <p className="text-sm font-semibold text-neutral-900">
+                                      <p className="text-sm font-semibold text-neutral-900 truncate">
                                         {doc.title}
                                       </p>
                                       {doc.content && (
@@ -722,7 +722,7 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
                                     className="flex items-center justify-between gap-4 rounded-2xl border border-neutral-200/80 bg-white px-4 py-3 shadow-sm"
                                   >
                                     <div className="min-w-0 flex-1">
-                                      <p className="text-sm font-semibold text-neutral-900">
+                                      <p className="text-sm font-semibold text-neutral-900 truncate">
                                         {doc.title}
                                       </p>
                                       <p className="mt-1 text-xs text-neutral-500">
