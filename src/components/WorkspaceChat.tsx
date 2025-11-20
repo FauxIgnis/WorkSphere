@@ -132,15 +132,12 @@ export function WorkspaceChat() {
     <div className="flex h-full bg-[#f7f6f3] text-neutral-900">
       <div className="flex w-80 flex-col border-r border-neutral-200 bg-white/80">
         <div className="border-b border-neutral-200 px-5 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.3em] text-neutral-400">
-                Workspace
-              </p>
-              <p className="mt-1 text-sm font-semibold text-neutral-800">
-                WS Chat
-              </p>
-            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-neutral-800">
+                  WS Chat
+                </p>
+              </div>
             <button
               onClick={handleCreateChat}
               className="inline-flex items-center gap-1 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:bg-neutral-50"
@@ -239,19 +236,10 @@ export function WorkspaceChat() {
           <>
             <div className="flex items-center justify-between border-b border-neutral-200 bg-white/70 px-8 py-5">
               <div>
-                <p className="text-xs uppercase tracking-[0.25em] text-neutral-400">
-                  Conversation
-                </p>
-                <h2 className="mt-1 text-xl font-semibold text-neutral-900">
+                <h2 className="text-xl font-semibold text-neutral-900">
                   {selectedChat.title || "Untitled chat"}
                 </h2>
               </div>
-              <button
-                onClick={handleCreateChat}
-                className="rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-400"
-              >
-                Start new chat
-              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-8 py-6">

@@ -16,11 +16,18 @@ export const createTask = mutation({
     description: v.optional(v.string()),
     assignedTo: v.optional(v.id("users")),
     dueDate: v.optional(v.number()),
+    startTime: v.optional(v.number()),
+    endTime: v.optional(v.number()),
+    location: v.optional(v.string()),
     priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
     documentId: v.optional(v.id("documents")),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthenticatedUser(ctx);
+
+    if (args.startTime && args.endTime && args.endTime < args.startTime) {
+      throw new Error("End time cannot be earlier than start time");
+    }
     
     const taskId = await ctx.db.insert("tasks", {
       title: args.title,
@@ -28,6 +35,9 @@ export const createTask = mutation({
       assignedTo: args.assignedTo,
       createdBy: userId,
       dueDate: args.dueDate,
+      startTime: args.startTime,
+      endTime: args.endTime,
+      location: args.location,
       status: "todo",
       priority: args.priority,
       documentId: args.documentId,
@@ -69,6 +79,9 @@ export const updateTaskDetails = mutation({
     taskId: v.id("tasks"),
     description: v.optional(v.string()),
     dueDate: v.optional(v.number()),
+    startTime: v.optional(v.number()),
+    endTime: v.optional(v.number()),
+    location: v.optional(v.string()),
     priority: v.optional(v.union(v.literal("low"), v.literal("medium"), v.literal("high"))),
   },
   handler: async (ctx, args) => {
@@ -82,10 +95,17 @@ export const updateTaskDetails = mutation({
       throw new Error("You can only edit tasks assigned to you or created by you");
     }
 
+    if (args.startTime && args.endTime && args.endTime < args.startTime) {
+      throw new Error("End time cannot be earlier than start time");
+    }
+
     const updates: Record<string, any> = {};
     if (args.description !== undefined) updates.description = args.description;
     if (args.dueDate !== undefined) updates.dueDate = args.dueDate;
     if (args.priority !== undefined) updates.priority = args.priority;
+    if (args.location !== undefined) updates.location = args.location;
+    if (args.startTime !== undefined) updates.startTime = args.startTime;
+    if (args.endTime !== undefined) updates.endTime = args.endTime;
 
     await ctx.db.patch(args.taskId, updates);
     return true;

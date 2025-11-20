@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, ReactNode } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { AIChatSidebar } from "./AIChatSidebar";
 import { TipTapEditor } from "./TipTapEditor";
 import { normalizeDocumentContent } from "../lib/documentContent";
+import { DocumentLibrary } from "./DocumentLibrary";
 
 interface DocumentEditorProps {
   documentId: string | null;
@@ -281,8 +282,16 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
     }
   };
 
+  const renderWithLibrary = (content: ReactNode) => (
+    <div className="flex h-full overflow-hidden bg-[#fdfcf8]">
+      <DocumentLibrary selectedDocumentId={documentId} onSelectDocument={onDocumentChange} />
+      <div className="flex-1 overflow-hidden">{content}</div>
+    </div>
+  );
+
+
   if (!documentId) {
-    return (
+    return renderWithLibrary(
       <div className="flex h-full flex-1 items-center justify-center bg-[#fdfcf8]">
         <div className="text-center">
           <DocumentArrowDownIcon className="mx-auto mb-4 h-16 w-16 text-neutral-300" />
@@ -294,23 +303,18 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
   }
 
   if (!currentDocument) {
-    return (
+    return renderWithLibrary(
       <div className="flex h-full flex-1 items-center justify-center bg-[#fdfcf8]">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-700" />
       </div>
     );
   }
 
-  return (
+  return renderWithLibrary(
     <div className="flex h-full flex-col overflow-hidden bg-[#fdfcf8]">
       <div className="border-b border-neutral-200/70 bg-[#f7f6f3]/80 px-10 py-5 backdrop-blur">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.3em] text-neutral-400">
-              <span>Document</span>
-              <span className="text-neutral-300">•</span>
-              <span>Version {currentDocument.version}</span>
-            </div>
             {isEditingTitle ? (
               <input
                 type="text"

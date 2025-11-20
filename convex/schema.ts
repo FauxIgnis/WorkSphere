@@ -13,6 +13,7 @@ const applicationTables = {
     version: v.number(),
     shareableLink: v.optional(v.string()),
     caseId: v.optional(v.id("cases")),
+    folderId: v.optional(v.id("folders")),
     structuredBlocks: v.optional(
       v.array(
         v.object({
@@ -26,12 +27,21 @@ const applicationTables = {
     .index("by_creator", ["createdBy"])
     .index("by_shareable_link", ["shareableLink"])
     .index("by_case", ["caseId"])
+    .index("by_folder", ["folderId"])
     .searchIndex("search_title", {
       searchField: "title",
     })
     .searchIndex("search_content", {
       searchField: "content",
     }),
+
+  folders: defineTable({
+    name: v.string(),
+    description: v.optional(v.string()),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_creator", ["createdBy"]),
 
   cases: defineTable({
     name: v.string(),
@@ -247,6 +257,9 @@ const applicationTables = {
     documentId: v.optional(v.id("documents")),
     caseId: v.optional(v.id("cases")),
     dueDate: v.optional(v.number()),
+    startTime: v.optional(v.number()),
+    endTime: v.optional(v.number()),
+    location: v.optional(v.string()),
     createdAt: v.number(),
     completedAt: v.optional(v.number()),
   })

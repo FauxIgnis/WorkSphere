@@ -20,7 +20,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { toast } from "sonner";
 
-interface CasePanelProps {
+interface HubPanelProps {
   selectedCaseId: string | null;
   onCaseSelect: (caseId: string | null) => void;
 }
@@ -40,7 +40,7 @@ type CaseChatMessage = {
   pending?: boolean;
 };
 
-export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
+export function HubPanel({ selectedCaseId, onCaseSelect }: HubPanelProps) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newCaseName, setNewCaseName] = useState("");
   const [newCaseDescription, setNewCaseDescription] = useState("");
@@ -356,9 +356,6 @@ export function CasePanel({ selectedCaseId, onCaseSelect }: CasePanelProps) {
           <div className="rounded-3xl border border-neutral-200/70 bg-white/90 px-6 py-5 shadow-sm backdrop-blur">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.4em] text-neutral-400">
-                  Case Management
-                </p>
                 <h2 className="mt-2 text-2xl font-semibold text-neutral-900">
                   Organize Your Matters
                 </h2>

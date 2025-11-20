@@ -49,14 +49,34 @@ async function checkDocumentPermission(
   return roleHierarchy[permission.role] >= roleHierarchy[requiredRole];
 }
 
+async function ensureFolderOwnership(
+  ctx: any,
+  folderId: string,
+  userId: string
+) {
+  const folder = await ctx.db.get(folderId);
+  if (!folder) {
+    throw new Error("Folder not found");
+  }
+  if (folder.createdBy !== userId) {
+    throw new Error("You don't have access to this folder");
+  }
+  return folder;
+}
+
 export const createDocument = mutation({
   args: {
     title: v.string(),
     content: v.optional(v.string()),
     isPublic: v.optional(v.boolean()),
+    folderId: v.optional(v.id("folders")),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthenticatedUser(ctx);
+
+    if (args.folderId) {
+      await ensureFolderOwnership(ctx, args.folderId, userId);
+    }
     
     const documentId = await ctx.db.insert("documents", {
       title: args.title,
@@ -66,6 +86,7 @@ export const createDocument = mutation({
       lastModifiedBy: userId,
       lastModifiedAt: Date.now(),
       version: 1,
+      folderId: args.folderId,
     });
 
     // Create initial version
@@ -558,6 +579,35 @@ export const deleteDocument = mutation({
     }
 
     await ctx.db.delete(args.documentId);
+    return true;
+  },
+});
+
+export const setDocumentFolder = mutation({
+  args: {
+    documentId: v.id("documents"),
+    folderId: v.union(v.id("folders"), v.null()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthenticatedUser(ctx);
+
+    const document = await ctx.db.get(args.documentId);
+    if (!document) {
+      throw new Error("Document not found");
+    }
+
+    if (document.createdBy !== userId) {
+      throw new Error("Only the creator can manage document folders");
+    }
+
+    if (args.folderId) {
+      await ensureFolderOwnership(ctx, args.folderId, userId);
+    }
+
+    await ctx.db.patch(args.documentId, {
+      folderId: args.folderId ?? undefined,
+    });
+
     return true;
   },
 });

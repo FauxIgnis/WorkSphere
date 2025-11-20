@@ -6,30 +6,33 @@ import { SignInForm } from "./SignInForm";
 import { SignOutButton } from "./SignOutButton";
 import { Sidebar } from "./components/Sidebar";
 import { DocumentEditor } from "./components/DocumentEditor";
-import { TaskPanel } from "./components/TaskPanel";
-import { CalendarPanel } from "./components/CalendarPanel";
-import { AuditPanel } from "./components/AuditPanel";
-import { CasePanel } from "./components/CasePanel";
+import { GoalsPanel } from "./components/GoalsPanel";
+import { HubPanel } from "./components/HubPanel";
 import { WorkspaceChat } from "./components/WorkspaceChat";
 import { SharedDocument } from "./SharedDocument";
 import { Toaster } from "sonner";
+import { BellIcon } from "@heroicons/react/24/outline";
+import { NotificationCenter } from "./components/NotificationCenter";
+import { SubscriptionModal } from "./components/SubscriptionModal";
 
-type WorkspaceView = 'editor' | 'tasks' | 'calendar' | 'audit' | 'cases' | 'chat';
+type WorkspaceView = 'editor' | 'goals' | 'hub' | 'chat';
 
 function MainApp() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeView, setActiveView] = useState<WorkspaceView>('editor');
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   const user = useQuery(api.auth.loggedInUser);
+  const unreadCount = useQuery(api.notifications.getUnreadCount) || 0;
+  const usageCheck = useQuery(api.subscriptions.checkUsageLimit, { feature: "documentsCreated" });
 
   const viewLabels: Record<WorkspaceView, string> = {
     editor: 'Documents',
-    cases: 'Cases',
-    tasks: 'Tasks',
-    calendar: 'Calendar',
-    audit: 'Audit Log',
+    hub: 'Hub',
+    goals: 'Goals',
     chat: 'WS Chat',
   };
 
@@ -43,19 +46,15 @@ function MainApp() {
             currentUserName={user?.name || user?.email || undefined}
           />
         );
-      case 'cases':
+      case 'hub':
         return (
-          <CasePanel
+          <HubPanel
             selectedCaseId={selectedCaseId}
             onCaseSelect={setSelectedCaseId}
           />
         );
-      case 'tasks':
-        return <TaskPanel documentId={selectedDocumentId} />;
-      case 'calendar':
-        return <CalendarPanel />;
-      case 'audit':
-        return <AuditPanel documentId={selectedDocumentId} />;
+      case 'goals':
+        return <GoalsPanel documentId={selectedDocumentId} />;
       case 'chat':
         return <WorkspaceChat />;
       default:
@@ -91,8 +90,6 @@ function MainApp() {
             onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
             activeView={activeView}
             onViewChange={setActiveView}
-            selectedDocumentId={selectedDocumentId}
-            onDocumentSelect={setSelectedDocumentId}
             selectedCaseId={selectedCaseId}
             onCaseSelect={setSelectedCaseId}
           />
@@ -114,11 +111,24 @@ function MainApp() {
                 </div>
               </div>
               <div className="flex items-center gap-3 text-sm text-neutral-500">
-                {user && (
-                  <span className="hidden sm:inline-flex max-w-[180px] truncate">
-                    {user.name || user.email}
-                  </span>
-                )}
+                <button
+                  onClick={() => setShowNotifications(true)}
+                  className="relative rounded-full border border-neutral-200 p-2 text-neutral-500 transition hover:border-neutral-300 hover:text-neutral-800"
+                  aria-label="Notifications"
+                >
+                  <BellIcon className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-semibold text-white">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowSubscriptionModal(true)}
+                  className="rounded-full border border-neutral-200 px-4 py-1.5 text-sm font-medium text-neutral-700 transition hover:border-neutral-300 hover:text-neutral-900"
+                >
+                  Upgrade
+                </button>
                 <SignOutButton />
               </div>
             </header>
@@ -128,6 +138,17 @@ function MainApp() {
           </div>
         </div>
       </Authenticated>
+      <NotificationCenter
+        isOpen={showNotifications}
+        onClose={() => setShowNotifications(false)}
+      />
+      <SubscriptionModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        feature={usageCheck && !usageCheck.allowed ? "document creation" : undefined}
+        currentUsage={usageCheck?.currentUsage}
+        limit={usageCheck?.limit}
+      />
     </div>
   );
 }

@@ -11,27 +11,35 @@ import {
   PencilSquareIcon,
   TrashIcon,
   XMarkIcon,
+  MapPinIcon,
 } from "@heroicons/react/24/outline";
 import { toast } from "sonner";
 
-interface TaskPanelProps {
+interface GoalsPanelProps {
   documentId: string | null;
 }
 
-export function TaskPanel({ documentId }: TaskPanelProps) {
+export function GoalsPanel({ documentId }: GoalsPanelProps) {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newTask, setNewTask] = useState({
     title: "",
     description: "",
     priority: "medium" as "low" | "medium" | "high",
     dueDate: "",
+    startTime: "",
+    endTime: "",
+    location: "",
   });
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [showArchive, setShowArchive] = useState(false);
+  const [sortMode, setSortMode] = useState<"priority" | "created" | "status">("priority");
   const [taskForm, setTaskForm] = useState({
     description: "",
     priority: "medium" as "low" | "medium" | "high",
     dueDate: "",
+    startTime: "",
+    endTime: "",
+    location: "",
   });
 
   const tasks = useQuery(api.tasks.getUserTasks, { includeCompleted: true }) || [];
@@ -45,6 +53,18 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
   const updateTaskDetails = useMutation(api.tasks.updateTaskDetails);
   const deleteTask = useMutation(api.tasks.deleteTask);
 
+  const toTimestamp = (value: string) => (value ? new Date(value).getTime() : undefined);
+  const toDateTimeInput = (value?: number) =>
+    value ? new Date(value).toISOString().slice(0, 16) : "";
+  const formatDateLabel = (value?: number) =>
+    value
+      ? new Date(value).toLocaleDateString(undefined, { dateStyle: "medium" })
+      : "No due date";
+  const formatDateTimeLabel = (value?: number) =>
+    value
+      ? new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
+      : null;
+
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTask.title.trim()) return;
@@ -54,13 +74,24 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
         title: newTask.title,
         description: newTask.description || undefined,
         priority: newTask.priority,
-        dueDate: newTask.dueDate ? new Date(newTask.dueDate).getTime() : undefined,
-        documentId: documentId as Id<"documents"> | undefined,
+        dueDate: toTimestamp(newTask.dueDate),
+        startTime: toTimestamp(newTask.startTime),
+        endTime: toTimestamp(newTask.endTime),
+        location: newTask.location || undefined,
+        documentId: documentId ? (documentId as Id<"documents">) : undefined,
       });
 
-      setNewTask({ title: "", description: "", priority: "medium", dueDate: "" });
+      setNewTask({
+        title: "",
+        description: "",
+        priority: "medium",
+        dueDate: "",
+        startTime: "",
+        endTime: "",
+        location: "",
+      });
       setShowCreateForm(false);
-      toast.success("Task created successfully");
+      toast.success("Goal created successfully");
     } catch (error) {
       toast.error("Failed to create task");
       console.error("Create task error:", error);
@@ -73,6 +104,9 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
       description: task.description || "",
       priority: task.priority,
       dueDate: task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : "",
+      startTime: toDateTimeInput(task.startTime),
+      endTime: toDateTimeInput(task.endTime),
+      location: task.location || "",
     });
   };
 
@@ -85,9 +119,12 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
         taskId: editingTaskId as Id<"tasks">,
         description: taskForm.description || undefined,
         priority: taskForm.priority,
-        dueDate: taskForm.dueDate ? new Date(taskForm.dueDate).getTime() : undefined,
+        dueDate: toTimestamp(taskForm.dueDate),
+        startTime: toTimestamp(taskForm.startTime),
+        endTime: toTimestamp(taskForm.endTime),
+        location: taskForm.location || undefined,
       });
-      toast.success("Task updated");
+      toast.success("Goal updated");
       setEditingTaskId(null);
     } catch (error) {
       console.error("Update task error:", error);
@@ -101,7 +138,7 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
 
     try {
       await deleteTask({ taskId: taskId as Id<"tasks"> });
-      toast.success("Task deleted");
+      toast.success("Goal deleted");
       if (editingTaskId === taskId) {
         setEditingTaskId(null);
       }
@@ -121,7 +158,7 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
         taskId: taskId as Id<"tasks">,
         status,
       });
-      toast.success(successMessage || "Task status updated");
+      toast.success(successMessage || "Goal status updated");
     } catch (error) {
       toast.error("Failed to update task status");
       console.error("Update task error:", error);
@@ -129,7 +166,7 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
   };
 
   const handleRestoreTask = async (taskId: string) => {
-    await handleStatusChange(taskId, "in_progress", "Task restored to In Progress");
+    await handleStatusChange(taskId, "in_progress", "Goal restored to In Progress");
   };
 
   const getPriorityColor = (priority: string) => {
@@ -160,7 +197,40 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
 
   const baseTasks = documentId ? documentTasks : tasks;
   const archivedTasks = baseTasks.filter((task) => task.status === "completed");
-  const displayTasks = baseTasks.filter((task) => task.status !== "completed");
+  const priorityOrder: Record<"high" | "medium" | "low", number> = {
+    high: 0,
+    medium: 1,
+    low: 2,
+  };
+
+  const displayTasks = baseTasks
+    .filter((task) => task.status !== "completed")
+    .slice()
+    .sort((a, b) => {
+      if (sortMode === "created") {
+        return b.createdAt - a.createdAt;
+      }
+
+      if (sortMode === "status") {
+        const statusOrder: Record<"todo" | "in_progress" | "completed", number> = {
+          in_progress: 0,
+          todo: 1,
+          completed: 2,
+        };
+        const statusDiff = statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder];
+        if (statusDiff !== 0) {
+          return statusDiff;
+        }
+      }
+
+      const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+      if (priorityDiff !== 0) {
+        return priorityDiff;
+      }
+      const aDue = a.dueDate || Number.MAX_SAFE_INTEGER;
+      const bDue = b.dueDate || Number.MAX_SAFE_INTEGER;
+      return aDue - bDue;
+    });
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-[#fdfcf8]">
@@ -169,18 +239,30 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
           <div className="rounded-3xl border border-neutral-200/70 bg-white/90 px-6 py-5 shadow-sm backdrop-blur">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.4em] text-neutral-400">Taskboard</p>
                 <h2 className="mt-2 text-2xl font-semibold text-neutral-900">
-                  {documentId ? "Document Tasks" : "My Tasks"}
+                  {documentId ? "Document Goals" : "My Goals"}
                 </h2>
                 <p className="mt-1 text-sm text-neutral-500">
                   {documentId
-                    ? "Track progress and collaborate on tasks connected to this document."
-                    : "Manage your personal and shared assignments across the workspace."
+                    ? "Track progress and collaborate on goals connected to this document."
+                    : "Manage your personal and shared objectives across the workspace."
                   }
                 </p>
               </div>
               <div className="flex items-center gap-3">
+                <div className="inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium text-neutral-600">
+                  <span className="text-xs uppercase tracking-[0.2em] text-neutral-400">Sort by</span>
+                  <select
+                    value={sortMode}
+                    onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
+                    className="rounded-full border border-neutral-200 bg-white px-3 py-1 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none"
+                  >
+                    <option value="priority">Priority</option>
+                    <option value="created">Creation date</option>
+                    <option value="status">Status</option>
+                  </select>
+                </div>
+
                 <button
                   onClick={() => setShowArchive(!showArchive)}
                   className={`inline-flex items-center gap-2 rounded-full border px-5 py-2 text-sm font-medium transition ${
@@ -201,7 +283,7 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
                   className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-5 py-2 text-sm font-medium text-neutral-100 transition hover:bg-neutral-700"
                 >
                   <PlusIcon className="h-4 w-4" />
-                  New Task
+                  New Goal
                 </button>
               </div>
             </div>
@@ -213,14 +295,14 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
                 <form onSubmit={handleCreateTask} className="grid grid-cols-1 gap-5 md:grid-cols-2">
                   <div className="md:col-span-2">
                     <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
-                      Task Title
+                      Goal Title
                     </label>
                     <input
                       type="text"
                       value={newTask.title}
                       onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
                       className="mt-2 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
-                      placeholder="Outline the task..."
+                      placeholder="Outline the goal..."
                       required
                     />
                   </div>
@@ -265,13 +347,50 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
                     />
                   </div>
 
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
+                      Start Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={newTask.startTime}
+                      onChange={(e) => setNewTask({ ...newTask, startTime: e.target.value })}
+                      className="mt-2 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
+                      End Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={newTask.endTime}
+                      onChange={(e) => setNewTask({ ...newTask, endTime: e.target.value })}
+                      className="mt-2 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      value={newTask.location}
+                      onChange={(e) => setNewTask({ ...newTask, location: e.target.value })}
+                      placeholder="Add a room, link, or address"
+                      className="mt-2 w-full rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                    />
+                  </div>
+
                   <div className="md:col-span-2 flex flex-wrap gap-3">
                     <button
                       type="submit"
                       className="inline-flex items-center gap-2 rounded-full bg-neutral-900 px-5 py-2 text-sm font-medium text-neutral-100 transition hover:bg-neutral-700"
                     >
                       <PaperAirplaneIcon className="h-4 w-4" />
-                      Create Task
+                      Create Goal
                     </button>
                     <button
                       type="button"
@@ -291,11 +410,11 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm">
                     <CheckCircleIcon className="h-8 w-8 text-neutral-400" />
                   </div>
-                  <h3 className="mt-6 text-lg font-semibold text-neutral-900">No tasks yet</h3>
+                  <h3 className="mt-6 text-lg font-semibold text-neutral-900">No goals yet</h3>
                   <p className="mt-2 max-w-md text-sm text-neutral-500">
                     {documentId
-                      ? "Create tasks linked to this document to align your team and track progress."
-                      : "Capture your next actions and assign work to teammates to keep momentum."
+                      ? "Create goals linked to this document to align your team and track progress."
+                      : "Capture your next objectives and assign work to teammates to keep momentum."
                     }
                   </p>
                   <button
@@ -303,7 +422,7 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
                     className="mt-6 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-5 py-2 text-sm font-medium text-neutral-600 transition hover:border-neutral-300 hover:text-neutral-800"
                   >
                     <PlusIcon className="h-4 w-4" />
-                    Add your first task
+                    Add your first goal
                   </button>
                 </div>
               ) : (
@@ -343,9 +462,11 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
                               </span>
                             )}
 
-                            <span className="inline-flex items-center gap-1 text-neutral-500 normal-case tracking-normal">
-                              <ClockIcon className="h-4 w-4 text-neutral-400" />
-                              {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "No due date"}
+                            <div className="inline-flex flex-wrap items-center gap-2 text-neutral-500 normal-case tracking-normal">
+                              <span className="inline-flex items-center gap-1">
+                                <ClockIcon className="h-4 w-4 text-neutral-400" />
+                                {formatDateLabel(task.dueDate)}
+                              </span>
                               <span className="ml-1 flex gap-1">
                                 <button
                                   onClick={() => handleEditTask(task)}
@@ -362,7 +483,28 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
                                   <TrashIcon className="h-4 w-4" />
                                 </button>
                               </span>
-                            </span>
+                            </div>
+
+                            {task.startTime && (
+                              <span className="inline-flex items-center gap-1 text-neutral-500 normal-case tracking-normal">
+                                <ClockIcon className="h-4 w-4 text-neutral-400" />
+                                Start · {formatDateTimeLabel(task.startTime)}
+                              </span>
+                            )}
+
+                            {task.endTime && (
+                              <span className="inline-flex items-center gap-1 text-neutral-500 normal-case tracking-normal">
+                                <ClockIcon className="h-4 w-4 text-neutral-400" />
+                                End · {formatDateTimeLabel(task.endTime)}
+                              </span>
+                            )}
+
+                            {task.location && (
+                              <span className="inline-flex items-center gap-1 text-neutral-500 normal-case tracking-normal">
+                                <MapPinIcon className="h-4 w-4 text-neutral-400" />
+                                {task.location}
+                              </span>
+                            )}
                           </div>
                         </div>
 
@@ -397,7 +539,7 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
                       {isEditing && (
                         <div className="mt-4 rounded-2xl border border-neutral-200 bg-[#f7f6f3]/60 px-4 py-4">
                           <div className="mb-3 flex items-center justify-between">
-                            <h4 className="text-sm font-semibold text-neutral-700">Edit Task</h4>
+                            <h4 className="text-sm font-semibold text-neutral-700">Edit Goal</h4>
                             <button
                               onClick={() => setEditingTaskId(null)}
                               className="rounded-full p-1 text-neutral-400 transition hover:bg-neutral-200"
@@ -443,6 +585,40 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
                                 className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none"
                               />
                             </div>
+                            <div>
+                              <label className="text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
+                                Start Time
+                              </label>
+                              <input
+                                type="datetime-local"
+                                value={taskForm.startTime}
+                                onChange={(e) => setTaskForm({ ...taskForm, startTime: e.target.value })}
+                                className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
+                                End Time
+                              </label>
+                              <input
+                                type="datetime-local"
+                                value={taskForm.endTime}
+                                onChange={(e) => setTaskForm({ ...taskForm, endTime: e.target.value })}
+                                className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none"
+                              />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
+                                Location
+                              </label>
+                              <input
+                                type="text"
+                                value={taskForm.location}
+                                onChange={(e) => setTaskForm({ ...taskForm, location: e.target.value })}
+                                className="mt-2 w-full rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm text-neutral-700 focus:border-neutral-400 focus:outline-none"
+                                placeholder="Add a room, link, or address"
+                              />
+                            </div>
                             <div className="md:col-span-2 flex flex-wrap gap-2">
                               <button
                                 type="submit"
@@ -470,9 +646,9 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
                 <div className="mt-8 rounded-2xl border border-neutral-200 bg-white px-5 py-5 shadow-sm">
                   <div className="mb-4 flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold text-neutral-900">Archived Tasks</h3>
+                      <h3 className="text-lg font-semibold text-neutral-900">Archived Goals</h3>
                       <p className="text-sm text-neutral-500">
-                        Tasks marked as done are stored here. Restore them anytime.
+                        Goals marked as done are stored here. Restore them anytime.
                       </p>
                     </div>
                     <button
@@ -484,7 +660,7 @@ export function TaskPanel({ documentId }: TaskPanelProps) {
                   </div>
                   {archivedTasks.length === 0 ? (
                     <div className="rounded-xl border border-dashed border-neutral-200 bg-[#f7f6f3]/60 px-4 py-6 text-center text-sm text-neutral-500">
-                      No archived tasks yet.
+                      No archived goals yet.
                     </div>
                   ) : (
                     <div className="space-y-3">
