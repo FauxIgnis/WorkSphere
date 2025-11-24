@@ -13,7 +13,6 @@ import { SharedDocument } from "./SharedDocument";
 import { Toaster } from "sonner";
 import { BellIcon } from "@heroicons/react/24/outline";
 import { NotificationCenter } from "./components/NotificationCenter";
-import { SubscriptionModal } from "./components/SubscriptionModal";
 
 type WorkspaceView = 'editor' | 'goals' | 'hub' | 'chat';
 
@@ -23,11 +22,9 @@ function MainApp() {
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [selectedCaseId, setSelectedCaseId] = useState<string | null>(null);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   const user = useQuery(api.auth.loggedInUser);
   const unreadCount = useQuery(api.notifications.getUnreadCount) || 0;
-  const usageCheck = useQuery(api.subscriptions.checkUsageLimit, { feature: "documentsCreated" });
 
   const viewLabels: Record<WorkspaceView, string> = {
     editor: 'Documents',
@@ -63,9 +60,9 @@ function MainApp() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[#f7f6f3] text-neutral-900">
+    <div className="h-screen flex flex-col bg-gray-50 text-neutral-900">
       <Unauthenticated>
-        <div className="min-h-screen flex items-center justify-center bg-[#f7f6f3] p-6">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
           <div className="max-w-md w-full">
             <div className="text-center mb-10">
               <div className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-neutral-400">
@@ -76,7 +73,7 @@ function MainApp() {
                 Unlock collaborative drafting, AI research, and case automation in one calm workspace.
               </p>
             </div>
-            <div className="rounded-3xl border border-neutral-200 bg-white/90 p-6 shadow-sm">
+            <div className="rounded-3xl border border-neutral-200 bg-white p-6 shadow-sm">
               <SignInForm />
             </div>
           </div>
@@ -94,7 +91,7 @@ function MainApp() {
             onCaseSelect={setSelectedCaseId}
           />
           <div className="flex-1 flex flex-col overflow-hidden">
-            <header className="flex h-14 items-center justify-between border-b border-neutral-200/70 bg-[#f7f6f3]/90 px-6 backdrop-blur">
+            <header className="flex h-14 items-center justify-between border-b border-neutral-200 bg-white px-6">
               <div className="flex flex-col">
                 <div className="mt-1 flex items-center gap-2 text-sm text-neutral-500">
                   <span className="font-medium text-neutral-700">Home</span>
@@ -123,12 +120,6 @@ function MainApp() {
                     </span>
                   )}
                 </button>
-                <button
-                  onClick={() => setShowSubscriptionModal(true)}
-                  className="rounded-full border border-neutral-200 px-4 py-1.5 text-sm font-medium text-neutral-700 transition hover:border-neutral-300 hover:text-neutral-900"
-                >
-                  Upgrade
-                </button>
                 <SignOutButton />
               </div>
             </header>
@@ -141,13 +132,6 @@ function MainApp() {
       <NotificationCenter
         isOpen={showNotifications}
         onClose={() => setShowNotifications(false)}
-      />
-      <SubscriptionModal
-        isOpen={showSubscriptionModal}
-        onClose={() => setShowSubscriptionModal(false)}
-        feature={usageCheck && !usageCheck.allowed ? "document creation" : undefined}
-        currentUsage={usageCheck?.currentUsage}
-        limit={usageCheck?.limit}
       />
     </div>
   );

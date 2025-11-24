@@ -129,7 +129,7 @@ export function WorkspaceChat() {
   };
 
   return (
-    <div className="flex h-full bg-[#f7f6f3] text-neutral-900">
+    <div className="flex h-full bg-gray-50 text-neutral-900">
       <div className="flex w-80 flex-col border-r border-neutral-200 bg-white/80">
         <div className="border-b border-neutral-200 px-5 py-4">
             <div className="flex items-center justify-between">

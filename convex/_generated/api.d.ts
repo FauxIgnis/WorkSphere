@@ -24,7 +24,6 @@ import type * as http from "../http.js";
 import type * as notifications from "../notifications.js";
 import type * as presence from "../presence.js";
 import type * as router from "../router.js";
-import type * as subscriptions from "../subscriptions.js";
 import type * as tasks from "../tasks.js";
 
 import type {
@@ -50,7 +49,6 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   presence: typeof presence;
   router: typeof router;
-  subscriptions: typeof subscriptions;
   tasks: typeof tasks;
 }>;
 

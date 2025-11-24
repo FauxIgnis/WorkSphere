@@ -22,8 +22,8 @@ if (typeof convexUrl !== "string" || convexUrl.length === 0) {
   );
 
   root.render(
-    <div className="min-h-screen flex items-center justify-center bg-[#f7f6f3] text-neutral-900">
-      <div className="max-w-lg space-y-4 rounded-lg border border-neutral-200 bg-white p-8 shadow-sm">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 text-neutral-900">
+      <div className="max-w-lg space-y-4 rounded-2xl border border-neutral-200 bg-white p-10 shadow-sm">
         <h1 className="text-xl font-semibold">Configuration required</h1>
         <p className="text-sm text-neutral-600">
           The application cannot connect to Convex because the <code className="rounded bg-neutral-100 px-1 py-0.5">VITE_CONVEX_URL</code>

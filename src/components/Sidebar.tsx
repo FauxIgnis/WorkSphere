@@ -35,10 +35,10 @@ export function Sidebar({
 
   if (collapsed) {
     return (
-      <div className="flex w-16 flex-col border-r border-neutral-200 bg-[#f7f6f3]">
+      <div className="flex w-16 flex-col border-r border-neutral-200 bg-white">
         <button
           onClick={onToggleCollapse}
-          className="flex h-12 items-center justify-center border-b border-neutral-200 text-neutral-500 transition hover:bg-neutral-100"
+          className="flex h-12 items-center justify-center border-b border-neutral-200 text-neutral-500 transition hover:bg-neutral-50"
         >
           <ChevronRightIcon className="h-5 w-5" />
         </button>
@@ -50,8 +50,8 @@ export function Sidebar({
               onClick={() => onViewChange(item.id)}
               className={`relative flex h-12 w-full items-center justify-center transition ${
                 activeView === item.id
-                  ? 'bg-neutral-100 text-neutral-900'
-                  : 'text-neutral-500 hover:bg-neutral-100'
+                  ? 'bg-gray-100 text-neutral-900'
+                  : 'text-neutral-500 hover:bg-neutral-50'
               }`}
               title={item.label}
             >
@@ -69,12 +69,12 @@ export function Sidebar({
   }
 
   return (
-    <div className="flex w-80 flex-col border-r border-neutral-200 bg-[#f7f6f3]">
+    <div className="flex w-80 flex-col border-r border-neutral-200 bg-white">
       <div className="border-b border-neutral-200 px-5 py-4">
         <div className="mb-4 flex items-center justify-end">
           <button
             onClick={onToggleCollapse}
-            className="rounded-md border border-neutral-200 p-1.5 text-neutral-500 transition hover:bg-white"
+            className="rounded-md border border-neutral-200 p-1.5 text-neutral-500 transition hover:bg-neutral-50"
           >
             <ChevronLeftIcon className="h-4 w-4" />
           </button>
@@ -87,8 +87,8 @@ export function Sidebar({
               onClick={() => onViewChange(item.id)}
               className={`flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition ${
                 activeView === item.id
-                  ? 'bg-white text-neutral-900 shadow-sm'
-                  : 'text-neutral-600 hover:bg-neutral-100'
+                  ? 'bg-gray-100 text-neutral-900'
+                  : 'text-neutral-600 hover:bg-neutral-50'
               }`}
             >
               <item.icon className="h-4 w-4" />

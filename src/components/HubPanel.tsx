@@ -350,7 +350,7 @@ export function HubPanel({ selectedCaseId, onCaseSelect }: HubPanelProps) {
   };
 
   return (
-    <div className="flex h-full flex-col bg-[#fdfcf8]">
+    <div className="flex h-full flex-col bg-gray-50">
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto flex min-h-full w-full max-w-6xl flex-col gap-6 px-6 py-8">
           <div className="rounded-3xl border border-neutral-200/70 bg-white/90 px-6 py-5 shadow-sm backdrop-blur">
@@ -397,7 +397,7 @@ export function HubPanel({ selectedCaseId, onCaseSelect }: HubPanelProps) {
               </div>
 
               {showCreateForm && (
-                <div className="border-b border-neutral-200/70 bg-[#f7f6f3]/60 px-5 py-5">
+                <div className="border-b border-neutral-200/70 bg-gray-50 px-5 py-5">
                   <form onSubmit={handleCreateCase} className="space-y-3">
                     <div>
                       <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
@@ -450,7 +450,7 @@ export function HubPanel({ selectedCaseId, onCaseSelect }: HubPanelProps) {
 
               <div className="flex-1 overflow-y-auto px-5 py-5">
                 {cases.length === 0 ? (
-                  <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-[#f7f6f3]/60 px-4 py-12 text-center">
+                  <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-gray-50 px-4 py-12 text-center">
                     <FolderIcon className="h-10 w-10 text-neutral-400" />
                     <h3 className="mt-4 text-sm font-semibold text-neutral-900">
                       No cases yet
@@ -589,7 +589,7 @@ export function HubPanel({ selectedCaseId, onCaseSelect }: HubPanelProps) {
               {selectedCase ? (
                 <>
                   <div className="flex h-full min-h-0 flex-col">
-                  <div className="border-b border-neutral-200/70 bg-[#f7f6f3]/60 px-6 py-5">
+                  <div className="border-b border-neutral-200/70 bg-gray-50 px-6 py-5">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                         <div>
                           <h3 className="text-xl font-semibold text-neutral-900">
@@ -647,7 +647,7 @@ export function HubPanel({ selectedCaseId, onCaseSelect }: HubPanelProps) {
                             </div>
                             <div className="max-h-[360px] space-y-3 overflow-y-auto px-5 py-4">
                               {caseDocuments.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-[#f7f6f3]/70 px-4 py-8 text-center">
+                                <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-gray-50 px-4 py-8 text-center">
                                   <DocumentTextIcon className="h-10 w-10 text-neutral-400" />
                                   <p className="mt-3 text-sm font-semibold text-neutral-900">
                                     No documents linked
@@ -709,7 +709,7 @@ export function HubPanel({ selectedCaseId, onCaseSelect }: HubPanelProps) {
                             </div>
                             <div className="max-h-[360px] space-y-3 overflow-y-auto px-5 py-4">
                               {availableDocuments.length === 0 ? (
-                                <div className="rounded-2xl border border-dashed border-neutral-200 bg-[#f7f6f3]/70 px-4 py-8 text-center text-sm text-neutral-500">
+                                <div className="rounded-2xl border border-dashed border-neutral-200 bg-gray-50 px-4 py-8 text-center text-sm text-neutral-500">
                                   No available documents. Create a document first or remove it from another case.
                                 </div>
                               ) : (
@@ -772,7 +772,7 @@ export function HubPanel({ selectedCaseId, onCaseSelect }: HubPanelProps) {
                           </div>
                           <div className="space-y-3 px-5 py-4 max-h-80 overflow-y-auto">
                             {caseFiles.length === 0 ? (
-                              <div className="rounded-2xl border border-dashed border-neutral-200 bg-[#f7f6f3]/70 px-4 py-6 text-center text-sm text-neutral-500">
+                              <div className="rounded-2xl border border-dashed border-neutral-200 bg-gray-50 px-4 py-6 text-center text-sm text-neutral-500">
                                 No attachments yet. Upload PDF or Word files that should stay with this case.
                               </div>
                             ) : (
@@ -964,7 +964,7 @@ function ChatPanelContent({
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-neutral-200/80 bg-[#f7f6f3]/60 px-6 py-4">
+      <div className="border-t border-neutral-200/80 bg-gray-50 px-6 py-4">
         {canSendMessages ? (
           <form
             onSubmit={handleSendMessage}

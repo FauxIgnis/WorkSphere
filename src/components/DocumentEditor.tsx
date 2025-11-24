@@ -283,7 +283,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
   };
 
   const renderWithLibrary = (content: ReactNode) => (
-    <div className="flex h-full overflow-hidden bg-[#fdfcf8]">
+    <div className="flex h-full overflow-hidden bg-gray-50">
       <DocumentLibrary selectedDocumentId={documentId} onSelectDocument={onDocumentChange} />
       <div className="flex-1 overflow-hidden">{content}</div>
     </div>
@@ -292,7 +292,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
 
   if (!documentId) {
     return renderWithLibrary(
-      <div className="flex h-full flex-1 items-center justify-center bg-[#fdfcf8]">
+      <div className="flex h-full flex-1 items-center justify-center bg-gray-50">
         <div className="text-center">
           <DocumentArrowDownIcon className="mx-auto mb-4 h-16 w-16 text-neutral-300" />
           <h3 className="text-lg font-semibold text-neutral-800">No document selected</h3>
@@ -304,15 +304,15 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
 
   if (!currentDocument) {
     return renderWithLibrary(
-      <div className="flex h-full flex-1 items-center justify-center bg-[#fdfcf8]">
+      <div className="flex h-full flex-1 items-center justify-center bg-gray-50">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-neutral-300 border-t-neutral-700" />
       </div>
     );
   }
 
   return renderWithLibrary(
-    <div className="flex h-full flex-col overflow-hidden bg-[#fdfcf8]">
-      <div className="border-b border-neutral-200/70 bg-[#f7f6f3]/80 px-10 py-5 backdrop-blur">
+    <div className="flex h-full flex-col overflow-hidden bg-gray-50">
+      <div className="border-b border-neutral-200 bg-white px-10 py-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             {isEditingTitle ? (
@@ -434,7 +434,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
         </div>
 
         {showVersions && (
-          <div className="flex w-80 flex-col border-l border-neutral-200 bg-[#f7f6f3]">
+          <div className="flex w-80 flex-col border-l border-neutral-200 bg-white">
             <div className="border-b border-neutral-200 px-4 py-3">
               <h3 className="text-sm font-semibold text-neutral-700">Document versions</h3>
             </div>
@@ -465,7 +465,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
         )}
 
         {showComments && (
-          <div className="flex w-80 flex-col border-l border-neutral-200 bg-[#f7f6f3]">
+          <div className="flex w-80 flex-col border-l border-neutral-200 bg-white">
             <div className="border-b border-neutral-200 px-4 py-3">
               <h3 className="text-sm font-semibold text-neutral-700">Comments</h3>
             </div>
@@ -517,7 +517,7 @@ export function DocumentEditor({ documentId, onDocumentChange, currentUserName }
       </div>
 
       {hasUnsavedChanges && (
-        <div className="flex items-center justify-between border-t border-neutral-200 bg-[#f7f6f3]/90 px-10 py-3 text-sm text-neutral-600">
+        <div className="flex items-center justify-between border-t border-neutral-200 bg-white px-10 py-3 text-sm text-neutral-600">
           <div className="flex items-center gap-2">
             <span>Unsaved changes</span>
             {isAutoSaving && <span className="text-neutral-500">Auto-saving in progress…</span>}

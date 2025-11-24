@@ -95,9 +95,9 @@ export function AIChatSidebar({ isOpen, onClose, documentId, documentContent }: 
   if (!isOpen) return null;
 
   return (
-    <div className="w-96 border-l border-gray-200 bg-[#f7f6f3] flex flex-col transition-all duration-300 ease-in-out">
+    <div className="w-96 border-l border-gray-200 bg-white flex flex-col transition-all duration-300 ease-in-out">
       {/* Header */}
-      <div className="px-6 py-5 border-b border-gray-200 bg-[#f7f6f3]">
+      <div className="px-6 py-5 border-b border-gray-200 bg-white">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 rounded-xl border border-gray-200 bg-white flex items-center justify-center shadow-sm">
@@ -212,7 +212,7 @@ export function AIChatSidebar({ isOpen, onClose, documentId, documentContent }: 
       </div>
 
       {/* Chat Input */}
-      <div className="px-6 py-5 border-t border-gray-200 bg-[#f7f6f3]">
+      <div className="px-6 py-5 border-t border-gray-200 bg-white">
         <form onSubmit={handleSubmit} className="flex items-end space-x-3">
           <div className="flex-1">
             <textarea

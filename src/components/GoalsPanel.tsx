@@ -233,7 +233,7 @@ export function GoalsPanel({ documentId }: GoalsPanelProps) {
     });
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-[#fdfcf8]">
+    <div className="flex h-full flex-col overflow-hidden bg-gray-50">
       <div className="flex-1 overflow-hidden">
         <div className="mx-auto flex h-full w-full max-w-5xl flex-col gap-6 px-6 py-8">
           <div className="rounded-3xl border border-neutral-200/70 bg-white/90 px-6 py-5 shadow-sm backdrop-blur">
@@ -291,7 +291,7 @@ export function GoalsPanel({ documentId }: GoalsPanelProps) {
 
           <div className="flex flex-1 flex-col overflow-hidden rounded-3xl border border-neutral-200/70 bg-white shadow-sm">
             {showCreateForm && (
-              <div className="border-b border-neutral-200/70 bg-[#f7f6f3]/60 px-6 py-6">
+              <div className="border-b border-neutral-200/70 bg-gray-50 px-6 py-6">
                 <form onSubmit={handleCreateTask} className="grid grid-cols-1 gap-5 md:grid-cols-2">
                   <div className="md:col-span-2">
                     <label className="block text-xs font-semibold uppercase tracking-[0.25em] text-neutral-400">
@@ -406,7 +406,7 @@ export function GoalsPanel({ documentId }: GoalsPanelProps) {
 
             <div className="flex-1 overflow-y-auto px-6 py-6">
               {displayTasks.length === 0 ? (
-                <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-[#f7f6f3]/60 py-16 text-center">
+              <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-gray-50 py-16 text-center">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm">
                     <CheckCircleIcon className="h-8 w-8 text-neutral-400" />
                   </div>
@@ -537,7 +537,7 @@ export function GoalsPanel({ documentId }: GoalsPanelProps) {
                       </div>
 
                       {isEditing && (
-                        <div className="mt-4 rounded-2xl border border-neutral-200 bg-[#f7f6f3]/60 px-4 py-4">
+                        <div className="mt-4 rounded-2xl border border-neutral-200 bg-gray-50 px-4 py-4">
                           <div className="mb-3 flex items-center justify-between">
                             <h4 className="text-sm font-semibold text-neutral-700">Edit Goal</h4>
                             <button
@@ -659,7 +659,7 @@ export function GoalsPanel({ documentId }: GoalsPanelProps) {
                     </button>
                   </div>
                   {archivedTasks.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-neutral-200 bg-[#f7f6f3]/60 px-4 py-6 text-center text-sm text-neutral-500">
+                    <div className="rounded-xl border border-dashed border-neutral-200 bg-gray-50 px-4 py-6 text-center text-sm text-neutral-500">
                       No archived goals yet.
                     </div>
                   ) : (

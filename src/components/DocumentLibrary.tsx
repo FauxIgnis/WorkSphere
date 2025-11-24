@@ -11,7 +11,6 @@ import {
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { SubscriptionModal } from "./SubscriptionModal";
 import { toast } from "sonner";
 
 type FolderFilter = "all" | "ungrouped" | Id<"folders">;
@@ -32,7 +31,6 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
   const [folderName, setFolderName] = useState("");
   const [folderDescription, setFolderDescription] = useState("");
   const [folderPickerDocId, setFolderPickerDocId] = useState<Id<"documents"> | null>(null);
-  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   const documents = useQuery(api.documents.listUserDocuments) || [];
   const searchResults =
@@ -41,13 +39,8 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
       searchQuery.length > 2 ? { query: searchQuery } : "skip"
     ) || [];
   const folders = useQuery(api.folders.listUserFolders) || [];
-  const subscription = useQuery(api.subscriptions.getUserSubscription);
-  const usageCheck = useQuery(api.subscriptions.checkUsageLimit, {
-    feature: "documentsCreated",
-  });
 
   const createDocument = useMutation(api.documents.createDocument);
-  const incrementUsage = useMutation(api.subscriptions.incrementUsage);
   const setDocumentFolder = useMutation(api.documents.setDocumentFolder);
   const createFolder = useMutation(api.folders.createFolder);
   const updateFolder = useMutation(api.folders.updateFolder);
@@ -84,11 +77,6 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
     e.preventDefault();
     if (!newDocTitle.trim()) return;
 
-    if (usageCheck && !usageCheck.allowed) {
-      setShowSubscriptionModal(true);
-      return;
-    }
-
     try {
       const documentId = await createDocument({
         title: newDocTitle,
@@ -96,10 +84,6 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
         isPublic: newDocIsPublic,
         folderId: activeFolder?._id,
       });
-
-      if (subscription?.plan === "free") {
-        await incrementUsage({ feature: "documentsCreated" });
-      }
 
       setNewDocTitle("");
       setNewDocIsPublic(false);
@@ -192,7 +176,7 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
   };
 
   return (
-    <aside className="flex w-96 flex-col border-r border-neutral-200 bg-[#f7f6f3]">
+    <aside className="flex w-96 flex-col border-r border-neutral-200 bg-white">
       <div className="border-b border-neutral-200 px-5 py-4">
         <div className="mb-3 flex items-center justify-between">
           <div>
@@ -205,14 +189,14 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="rounded-md border border-neutral-200 p-1.5 text-neutral-500 transition hover:bg-white"
+            className="rounded-md border border-neutral-200 p-1.5 text-neutral-600 transition hover:bg-neutral-50"
           >
             <PlusIcon className="h-4 w-4" />
           </button>
         </div>
 
         {showCreateForm && (
-          <form onSubmit={handleCreateDocument} className="mb-4 space-y-3 rounded-lg border border-neutral-200 bg-white p-3">
+          <form onSubmit={handleCreateDocument} className="mb-4 space-y-3 rounded-xl border border-neutral-200 bg-gray-50 p-3">
             <input
               type="text"
               placeholder="Document title"
@@ -233,23 +217,18 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="inline-flex flex-1 items-center justify-center rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-neutral-100 transition hover:bg-neutral-700"
+                className="inline-flex flex-1 items-center justify-center rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-neutral-100 transition hover:bg-neutral-800"
               >
                 Create
               </button>
               <button
                 type="button"
                 onClick={() => setShowCreateForm(false)}
-                className="inline-flex flex-1 items-center justify-center rounded-md border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100"
+                className="inline-flex flex-1 items-center justify-center rounded-md border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-600 transition hover:bg-neutral-50"
               >
                 Cancel
               </button>
             </div>
-            {usageCheck && !usageCheck.allowed && (
-              <p className="text-xs text-red-500">
-                {usageCheck.reason}. Upgrade to unlock more documents.
-              </p>
-            )}
           </form>
         )}
 
@@ -273,14 +252,14 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
           </div>
           <button
             onClick={beginCreateFolder}
-            className="rounded-md border border-neutral-200 px-2 py-1 text-xs font-medium text-neutral-600 transition hover:bg-white"
+            className="rounded-md border border-neutral-200 px-2 py-1 text-xs font-medium text-neutral-600 transition hover:bg-neutral-50"
           >
             New
           </button>
         </div>
 
         {folderFormOpen && (
-          <form onSubmit={handleFolderSubmit} className="mb-4 space-y-2 rounded-lg border border-neutral-200 bg-white p-3 text-sm">
+          <form onSubmit={handleFolderSubmit} className="mb-4 space-y-2 rounded-xl border border-neutral-200 bg-gray-50 p-3 text-sm">
             <input
               type="text"
               value={folderName}
@@ -297,14 +276,14 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
             <div className="flex gap-2">
               <button
                 type="submit"
-                className="inline-flex flex-1 items-center justify-center rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-neutral-100 transition hover:bg-neutral-700"
+                className="inline-flex flex-1 items-center justify-center rounded-md bg-neutral-900 px-3 py-2 text-sm font-medium text-neutral-100 transition hover:bg-neutral-800"
               >
                 {folderEditingId ? "Save" : "Create"}
               </button>
               <button
                 type="button"
                 onClick={resetFolderForm}
-                className="inline-flex flex-1 items-center justify-center rounded-md border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100"
+                className="inline-flex flex-1 items-center justify-center rounded-md border border-neutral-200 px-3 py-2 text-sm font-medium text-neutral-600 transition hover:bg-neutral-50"
               >
                 Cancel
               </button>
@@ -316,7 +295,7 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
           <button
             onClick={() => setFolderFilter("all")}
             className={`flex w-full items-center justify-between rounded-md px-3 py-2 ${
-              folderFilter === "all" ? "bg-white font-semibold text-neutral-900 shadow-sm" : "text-neutral-600 hover:bg-white/50"
+              folderFilter === "all" ? "bg-gray-100 font-semibold text-neutral-900" : "text-neutral-600 hover:bg-neutral-50"
             }`}
           >
             <span>All documents</span>
@@ -325,7 +304,7 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
           <button
             onClick={() => setFolderFilter("ungrouped")}
             className={`flex w-full items-center justify-between rounded-md px-3 py-2 ${
-              folderFilter === "ungrouped" ? "bg-white font-semibold text-neutral-900 shadow-sm" : "text-neutral-600 hover:bg-white/50"
+              folderFilter === "ungrouped" ? "bg-gray-100 font-semibold text-neutral-900" : "text-neutral-600 hover:bg-neutral-50"
             }`}
           >
             <span>Unsorted</span>
@@ -341,7 +320,7 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
             <div
               key={folder._id}
               className={`flex items-center justify-between rounded-md px-3 py-2 text-sm ${
-                folderFilter === folder._id ? "bg-white shadow-sm" : "text-neutral-600 hover:bg-white/60"
+                folderFilter === folder._id ? "bg-gray-100" : "text-neutral-600 hover:bg-neutral-50"
               }`}
             >
               <button
@@ -360,14 +339,14 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
               <div className="flex gap-1 pl-2">
                 <button
                   onClick={() => beginEditFolder(folder._id)}
-                  className="rounded-md border border-neutral-200 p-1 text-neutral-500 transition hover:bg-white"
+                  className="rounded-md border border-neutral-200 p-1 text-neutral-500 transition hover:bg-neutral-50"
                   title="Rename folder"
                 >
                   <PencilSquareIcon className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => handleDeleteFolder(folder._id)}
-                  className="rounded-md border border-neutral-200 p-1 text-red-500 transition hover:bg-white"
+                  className="rounded-md border border-neutral-200 p-1 text-red-500 transition hover:bg-neutral-50"
                   title="Delete folder"
                 >
                   <TrashIcon className="h-4 w-4" />
@@ -380,7 +359,7 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
 
       <div className="flex-1 overflow-y-auto px-5 py-4">
         {filteredDocuments.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-neutral-200 bg-white/70 px-4 py-10 text-center text-neutral-400">
+          <div className="rounded-lg border border-dashed border-neutral-200 bg-gray-50 px-4 py-10 text-center text-neutral-400">
             <FolderIcon className="mx-auto mb-3 h-6 w-6" />
             <p className="text-sm">
               {searchQuery.length > 2 ? "No documents match your search" : "Create a document to get started"}
@@ -394,7 +373,7 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
                 <div
                   key={doc._id}
                   className={`rounded-lg border px-3 py-3 ${
-                    isActive ? "border-neutral-400 bg-white shadow-sm" : "border-transparent bg-transparent hover:border-neutral-200 hover:bg-white"
+                    isActive ? "border-neutral-300 bg-gray-50" : "border-transparent bg-transparent hover:border-neutral-200 hover:bg-gray-50"
                   }`}
                 >
                   <button
@@ -460,14 +439,6 @@ export function DocumentLibrary({ selectedDocumentId, onSelectDocument }: Docume
           </div>
         )}
       </div>
-
-      <SubscriptionModal
-        isOpen={showSubscriptionModal}
-        onClose={() => setShowSubscriptionModal(false)}
-        feature={usageCheck && !usageCheck.allowed ? "document creation" : undefined}
-        currentUsage={usageCheck?.currentUsage}
-        limit={usageCheck?.limit}
-      />
     </aside>
   );
 }

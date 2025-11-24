@@ -186,31 +186,6 @@ const applicationTables = {
     .index("by_user", ["userId"])
     .index("by_read_status", ["userId", "isRead"]),
 
-  subscriptions: defineTable({
-    userId: v.id("users"),
-    plan: v.union(v.literal("free"), v.literal("pro")),
-    status: v.union(v.literal("active"), v.literal("cancelled"), v.literal("expired")),
-    startDate: v.number(),
-    endDate: v.optional(v.number()),
-    stripeCustomerId: v.optional(v.string()),
-    stripeSubscriptionId: v.optional(v.string()),
-  })
-    .index("by_user", ["userId"])
-    .index("by_status", ["status"]),
-
-  usageTracking: defineTable({
-    userId: v.id("users"),
-    month: v.string(), // YYYY-MM format
-    aiQuestions: v.number(),
-    tasksCreated: v.number(),
-    documentsCreated: v.number(),
-    pdfExports: v.number(),
-    calendarEvents: v.number(),
-    fileUploads: v.number(),
-    lastUpdated: v.number(),
-  })
-    .index("by_user_month", ["userId", "month"]),
-
   chatMessages: defineTable({
     content: v.string(),
     authorId: v.id("users"),
